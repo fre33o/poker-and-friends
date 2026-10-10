@@ -1,0 +1,60 @@
+{
+  "name": "poker-and-friends",
+  "productName": "Poker & Friends",
+  "version": "1.7.0",
+  "description": "Poker-Clock und Cash-Game-Kasse für den Pokerabend",
+  "author": "Frieo",
+  "license": "MIT",
+  "homepage": "https://frieo.github.io/poker-and-friends/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Frieo/poker-and-friends.git"
+  },
+  "main": "src/main/main.js",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/with-cache.js electron .",
+    "test": "node test/core.test.js && node test/history.test.js",
+    "dist": "node scripts/with-cache.js electron-builder --win portable nsis",
+    "test:handy": "node scripts/with-cache.js electron test/remote-smoke.js",
+    "test:nav": "node scripts/with-cache.js electron test/history-nav.js",
+    "build:web": "node scripts/build-web.js",
+    "serve:web": "node scripts/serve-web.js",
+    "test:web": "node scripts/build-web.js && node scripts/with-cache.js electron test/web-smoke.js"
+  },
+  "build": {
+    "appId": "de.frie.pokerandfriends",
+    "productName": "Poker & Friends",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "portable": {
+      "artifactName": "PokerAndFriends-${version}-portable.exe"
+    },
+    "nsis": {
+      "artifactName": "PokerAndFriends-${version}-Setup.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Poker & Friends"
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "qrcode-generator": "^1.5.2"
+  }
+}
