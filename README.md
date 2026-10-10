@@ -9,7 +9,7 @@ Poker-Clock und Cash-Game-Kasse für den privaten Pokerabend. Als WebApp im Brow
 
 ## WebApp (ohne Installation)
 
-**[frieo.github.io/poker-and-friends](https://frieo.github.io/poker-and-friends/)** in Chrome, Edge, Safari oder Firefox öffnen. Gedacht für Laptop, Tablet oder TV im Querformat.
+**[fre33o.github.io/poker-and-friends](https://fre33o.github.io/poker-and-friends/)** in Chrome, Edge, Safari oder Firefox öffnen. Gedacht für Laptop, Tablet oder TV im Querformat.
 
 - Alles läuft im eigenen Browser: kein Konto, kein Server, keine Datenübertragung
 - Nach dem ersten Aufruf auch offline nutzbar, über das Symbol in der Adressleiste als App installierbar
@@ -19,30 +19,11 @@ Poker-Clock und Cash-Game-Kasse für den privaten Pokerabend. Als WebApp im Brow
 
 Die WebApp liegt im Ordner `docs` und wird mit `npm run build:web` aus demselben Code wie die Desktop-App gebaut.
 
-## Desktop-App (Download)
+## Desktop-App
 
-Unter [Releases](https://github.com/Frieo/poker-and-friends/releases) gibt es zwei Dateien:
+Die Windows-Desktop-App (mit Handy-Fernbedienung) gibt es derzeit nicht als Download. Wer sie nutzen möchte, kann sie selbst bauen (siehe unten). Die App ist nicht digital signiert, Windows warnt deshalb beim ersten Start.
 
-- `PokerAndFriends-<Version>-Setup.exe`: Installation mit Startmenü-Eintrag (empfohlen)
-- `PokerAndFriends-<Version>-portable.exe`: ohne Installation, z.B. vom USB-Stick
-
-Bitte nur von dieser Seite herunterladen, nicht über weitergeleitete Dateien.
-
-### Echtheit prüfen
-
-Zu jeder Datei steht im Release die SHA-256-Prüfsumme. Prüfen in der Eingabeaufforderung:
-
-```
-certutil -hashfile PokerAndFriends-1.7.0-Setup.exe SHA256
-```
-
-Stimmt die Ausgabe nicht mit der Prüfsumme im Release überein: Datei löschen und nicht starten.
-
-### Windows-Warnung
-
-Die App ist (noch) nicht digital signiert. Windows zeigt deshalb beim ersten Start "Der Computer wurde durch Windows geschützt". Nach erfolgreicher Prüfsummen-Kontrolle: **Weitere Informationen > Trotzdem ausführen**.
-
-## Datenschutz
+## Datenschutz (Desktop-App)
 
 - Keine Internetverbindung, keine Werbung, keine Telemetrie
 - Alle Daten (Spieler, Abende, Einstellungen) liegen nur auf dem eigenen Rechner unter `%APPDATA%\Poker & Friends\daten`

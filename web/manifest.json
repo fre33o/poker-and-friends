@@ -1,0 +1,14 @@
+{
+  "name": "Poker & Friends",
+  "short_name": "Poker",
+  "description": "Poker-Clock und Cash-Game-Kasse für den Pokerabend",
+  "start_url": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#070708",
+  "theme_color": "#070708",
+  "icons": [
+    { "src": "icon.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

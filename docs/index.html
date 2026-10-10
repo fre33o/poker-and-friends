@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Poker &amp; Friends</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070708">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ===== Startbildschirm ===== -->
+  <section class="view" id="start">
+    <div class="start-main">
+      <div class="start-brand">
+        <span class="suit">&spades;</span>
+        <h1><span class="word">POKER</span><span class="amp">&amp;</span><span class="word">FRIENDS</span></h1>
+      </div>
+      <div class="start-cards">
+        <button class="start-card" id="startTournament">
+          <h2>Mystery Bounty Turnier</h2>
+          <div class="sub" id="startTournamentSub"></div>
+          <div class="go" id="startTournamentGo"></div>
+        </button>
+        <button class="start-card" id="startCash">
+          <h2>Cash Game</h2>
+          <div class="sub" id="startCashSub"></div>
+          <div class="go" id="startCashGo"></div>
+        </button>
+        <button class="start-card" id="startHistory">
+          <h2>Rangliste</h2>
+          <div class="sub" id="startHistorySub"></div>
+          <div class="go"></div>
+        </button>
+      </div>
+    </div>
+    <div class="start-foot">
+      <span><button class="linkish" id="openRoster">Spielerliste</button> &middot; <button class="linkish" id="openData">Daten sichern</button></span>
+    </div>
+  </section>
+
+  <!-- ===== Turnier-Uhr ===== -->
+  <section class="view" id="tournament">
+    <header>
+      <div class="head-left">
+        <button class="info-btn icon" id="tMenuBtn" title="Steuermenü ein/aus">&#9776;</button>
+        <div class="brand"><span class="suit">&spades;</span> POKER <span class="amp">&amp;</span> FRIENDS</div>
+      </div>
+      <div class="level-tag" id="levelTag">LEVEL <span>1</span></div>
+      <div class="head-right">
+        <div class="walltime" id="tWalltime">--:--</div>
+        <button class="info-btn icon" id="infoBtn" title="Preispool und Mystery-Pool ein/aus (Taste I)">&euro;</button>
+      </div>
+      <nav class="menubar" id="tMenubar">
+        <div class="menu-section">
+          <h4>Uhr</h4>
+          <button data-act="toggle">Start / Pause</button>
+          <button data-act="next">Level vor</button>
+          <button data-act="prev">Level zurück</button>
+          <button data-act="plus">+1 Minute</button>
+          <button data-act="minus">-1 Minute</button>
+        </div>
+        <div class="menu-section">
+          <h4>Spieler</h4>
+          <button data-act="late">Nachzügler</button>
+          <button data-act="rebuy">Rebuy</button>
+          <button data-act="addon">Add-On</button>
+          <button data-act="out">Out</button>
+          <button data-act="undo">Rückgängig</button>
+        </div>
+        <div class="menu-section">
+          <h4>Anzeige</h4>
+          <button data-act="info">Geld-Übersicht</button>
+          <button data-act="full">Vollbild</button>
+          <button data-act="mute">Ton an / aus</button>
+        </div>
+        <div class="menu-section">
+          <h4>Verwaltung</h4>
+          <button data-act="settings">Einstellungen</button>
+          <button data-act="cash">Zum Cash Game</button>
+          <button data-act="history">Rangliste</button>
+          <button data-act="roster">Spielerliste</button>
+          <button data-act="end">Turnier beenden</button>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="clock-area">
+        <div class="phase" id="phase">Rebuy-Phase</div>
+        <div class="cd-wrap" id="cdWrap" title="Uhr starten / anhalten">
+          <div id="countdown">30:00</div>
+          <div class="play-icon" id="playIcon"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg></div>
+        </div>
+        <div class="progress"><div id="progress"></div></div>
+        <div class="paused-hint" id="pausedHint">UHR ANGEHALTEN</div>
+        <div class="blinds" id="blindsBox">
+          <div class="label">BLINDS</div>
+          <div class="value" id="blinds">5 / 10</div>
+          <div class="ante" id="ante">ANTE 10 (BB)</div>
+        </div>
+        <div class="next" id="next"></div>
+        <div class="break-info">
+          <div class="row click" id="breakAddonRow"><span>Add-On</span><b id="breakAddon">-</b></div>
+          <div class="row" id="breakNoteRow"><span>Hinweis</span><b id="breakNote">-</b></div>
+          <div class="row"><span>Umschläge füllen</span><b id="breakEnv">-</b></div>
+        </div>
+      </section>
+
+      <aside id="pools">
+        <div class="card">
+          <div class="label">Preispool</div>
+          <div class="big" id="prize">0 &euro;</div>
+          <div class="payout" id="payout"></div>
+        </div>
+        <div class="card mystery">
+          <div class="label">Mystery-Pool</div>
+          <div class="big" id="mystery">0 &euro;</div>
+          <div class="env-label" id="envLabel">UMSCHLÄGE</div>
+          <div class="envelopes" id="envelopes"></div>
+          <div class="small" id="envText"></div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <div class="stat"><div class="label">Spieler</div><div class="value" id="sPlayers"></div></div>
+      <div class="stat"><div class="label">Ø Stack</div><div class="value" id="sAvg"></div></div>
+      <div class="stat"><div class="label">Rebuys</div><div class="value" id="sRebuys"></div></div>
+      <div class="stat"><div class="label">Add-Ons</div><div class="value" id="sAddons"></div></div>
+      <div class="stat"><div class="label" id="sNextLabel"></div><div class="value" id="sNext"></div></div>
+    </footer>
+  </section>
+
+  <!-- ===== Cash Game ===== -->
+  <section class="view" id="cash">
+    <header>
+      <div class="head-left">
+        <button class="info-btn icon" id="cMenuBtn" title="Steuermenü">&#9776;</button>
+        <div class="brand"><span class="suit">&spades;</span> POKER <span class="amp">&amp;</span> FRIENDS</div>
+      </div>
+      <div class="mode">CASH GAME</div>
+      <div class="head-right"><div class="walltime" id="cWalltime">--:--</div></div>
+      <nav class="menubar" id="cMenubar">
+        <div class="menu-section">
+          <h4>Spieler</h4>
+          <button data-act="join">Spieler setzt sich</button>
+          <button data-act="rebuy">Nachkauf</button>
+          <button data-act="cashout">Auszahlen</button>
+          <button data-act="undo">Rückgängig</button>
+        </div>
+        <div class="menu-section">
+          <h4>Anzeige</h4>
+          <button data-act="full">Vollbild</button>
+        </div>
+        <div class="menu-section">
+          <h4>Verwaltung</h4>
+          <button data-act="roster">Spielerliste</button>
+          <button data-act="tournament">Zur Turnier-Uhr</button>
+          <button data-act="end">Abend beenden</button>
+          <button data-act="history">Rangliste</button>
+        </div>
+      </nav>
+    </header>
+
+    <div class="cash-main">
+      <div class="chead"><span>Spieler</span><span>Eingezahlt</span><span>Ausgezahlt</span><span>Ergebnis</span><span>Status</span></div>
+      <div class="crows" id="crows"></div>
+    </div>
+
+    <footer>
+      <div class="stat"><div class="label">Am Tisch</div><div class="value" id="cTable"></div></div>
+      <div class="stat"><div class="label">Eingezahlt</div><div class="value" id="cIn"></div></div>
+      <div class="stat"><div class="label">Ausgezahlt</div><div class="value" id="cOut"></div></div>
+      <div class="stat kasse"><div class="label">In der Kasse</div><div class="value" id="cKasse"></div></div>
+    </footer>
+  </section>
+
+  <!-- ===== Historie (Vorlage: mockup/historie.html) ===== -->
+  <section class="view" id="history">
+    <header>
+      <div class="head-left">
+        <div class="brand"><span class="suit">&spades;</span> POKER <span class="amp">&amp;</span> FRIENDS</div>
+      </div>
+      <div class="level-tag">RANGLISTE</div>
+      <div class="head-right"><button class="btn" id="historyBack">Zurück</button></div>
+    </header>
+    <main class="hist-main">
+      <div class="hist-tabs">
+        <button class="hist-tab" data-tab="rt">Rangliste Turnier</button>
+        <button class="hist-tab" data-tab="rc">Rangliste Cash Game</button>
+        <button class="hist-tab" data-tab="ab">Abende <span class="n" id="histCount"></span></button>
+      </div>
+      <div class="hist-pane" id="histPane"></div>
+    </main>
+  </section>
+
+  <div class="modal-bg" id="modalBg"><div class="modal-wrap"><button class="modal-x" id="modalX" title="Schließen">&#10005;</button><div class="modal" id="modal"></div></div></div>
+  <div class="toast" id="toast"></div>
+  <canvas id="confetti"></canvas>
+
+  <script src="core/core.js"></script>
+  <script src="core/history.js"></script>
+  <script src="core/commands.js"></script>
+  <script src="pf-web.js"></script>
+  <script src="backup.js"></script>
+  <script src="app.js"></script>
+  <script src="start.js"></script>
+  <script src="tournament.js"></script>
+  <script src="cash.js"></script>
+  <script src="history.js"></script>
+  <script src="boot.js"></script>
+</body>
+</html>

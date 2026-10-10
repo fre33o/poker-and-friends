@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poker &amp; Friends Handy</title>
+<style>
+:root {
+  --bg: #070708; --panel: #121215; --panel-2: #1a1a1f; --line: #2a2a31;
+  --text: #f4f4f6; --muted: #8d8d97; --red: #d4142f; --red-soft: #ff3b55; --red-dark: #5c0a16; --plus: #3ecf7a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: #000; color: var(--text); font-family: "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+body { min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; gap: 40px; padding: 24px 16px; }
+
+/* Rahmen nur am PC, damit das Mockup wie ein Handy aussieht */
+.phone { width: 390px; height: 820px; border: 10px solid #1d1d22; border-radius: 44px; overflow: hidden; position: relative; background: var(--bg); flex: none; }
+.notes { max-width: 460px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.notes h2 { color: var(--text); font-size: 18px; margin: 18px 0 8px; }
+.notes h2:first-child { margin-top: 0; }
+.notes b { color: var(--text); }
+.notes li { margin-left: 18px; }
+.laptop { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 16px; display: flex; gap: 16px; align-items: center; margin-top: 10px; }
+.qr { width: 120px; height: 120px; background:
+  repeating-conic-gradient(#fff 0 25%, #000 0 50%) 0 0/24px 24px; border: 8px solid #fff; border-radius: 6px; flex: none; }
+.laptop .t { color: var(--text); font-weight: 700; font-size: 16px; }
+.laptop small { display: block; margin-top: 6px; }
+@media (max-width: 900px) {
+  body { padding: 0; display: block; }
+  .phone { width: 100%; height: 100vh; border: 0; border-radius: 0; }
+  .notes { display: none; }
+}
+
+/* App */
+.app { position: absolute; inset: 0; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% 0%, #1c0509 0%, var(--bg) 55%); }
+.top { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 800; letter-spacing: .12em; font-size: 13px; }
+.brand span { color: var(--red); }
+.conn { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.conn i { width: 8px; height: 8px; border-radius: 50%; background: var(--plus); box-shadow: 0 0 8px var(--plus); }
+.conn.off i { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.seg { display: flex; margin: 10px 16px 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
+.seg button { flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; padding: 9px; border-radius: 9px; }
+.seg button.on { background: var(--red); color: #fff; }
+.screen { flex: 1; overflow-y: auto; padding: 12px 16px 16px; display: none; flex-direction: column; gap: 12px; }
+.screen.on { display: flex; }
+
+.status { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; text-align: center; }
+.status .lvl { font-size: 13px; letter-spacing: .2em; font-weight: 800; color: var(--muted); }
+.status .lvl b { color: var(--red); }
+.status .time { font-size: 64px; font-weight: 800; line-height: 1.05; margin: 2px 0; }
+.status .time.paused { color: var(--muted); }
+.status .blinds { font-size: 20px; font-weight: 700; }
+.status .next { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.status .hint { font-size: 12px; color: var(--red-soft); margin-top: 6px; min-height: 16px; }
+
+.row { display: grid; gap: 8px; }
+.r5 { grid-template-columns: 1fr 1fr 1.4fr 1fr 1fr; }
+.r2 { grid-template-columns: 1fr 1fr; }
+.r3 { grid-template-columns: 1fr 1fr 1fr; }
+.btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font: inherit; font-weight: 700; border-radius: 14px; padding: 14px 6px; font-size: 15px; }
+.btn:active { transform: scale(.97); }
+.btn.big { padding: 22px 8px; font-size: 18px; }
+.btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.ghost { background: none; color: var(--muted); }
+.btn small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); margin-top: 3px; }
+.btn.red small { color: #ffd0d6; }
+.btn[disabled] { opacity: .35; }
+.lbl { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--red-soft); margin-top: 4px; }
+.foot { display: flex; gap: 8px; }
+.foot .btn { flex: 1; font-size: 14px; padding: 12px 6px; }
+
+.money { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.money div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.money small { color: var(--muted); font-size: 12px; display: block; }
+.money b { font-size: 18px; }
+
+/* Cash */
+.plist { display: flex; flex-direction: column; gap: 6px; }
+.p { display: grid; grid-template-columns: 1fr auto; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.p .n { font-weight: 700; }
+.p .d { font-size: 12px; color: var(--muted); }
+.p.gone { opacity: .45; }
+.p .acts { display: flex; gap: 6px; }
+.p .acts .btn { padding: 8px 10px; font-size: 13px; border-radius: 10px; }
+
+/* Bottom Sheet */
+.sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 5; }
+.sheet-bg.on { opacity: 1; pointer-events: auto; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 86%; background: #0f0f12; border-top: 1px solid var(--line); border-radius: 22px 22px 0 0; transform: translateY(105%); transition: transform .25s ease; z-index: 6; display: flex; flex-direction: column; }
+.sheet.on { transform: translateY(0); }
+.sheet .h { padding: 16px 16px 6px; display: flex; justify-content: space-between; align-items: center; }
+.sheet .h b { font-size: 18px; }
+.sheet .h span { font-size: 13px; color: var(--muted); }
+.sheet .body { overflow-y: auto; padding: 8px 16px 12px; }
+.sheet .end { padding: 10px 16px 18px; display: flex; gap: 8px; border-top: 1px solid var(--line); }
+.sheet .end .btn { flex: 1; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 18px 8px; font: inherit; font-weight: 700; font-size: 17px; color: var(--text); }
+.tile.sel { border-color: var(--red); background: var(--red-dark); }
+.tile small { display: block; font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 3px; }
+.step { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.amount { font-size: 44px; font-weight: 800; text-align: center; margin: 6px 0 12px; }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pad .btn { font-size: 22px; padding: 14px; }
+.chips { display: flex; flex-direction: column; gap: 6px; }
+.chip { display: grid; grid-template-columns: 70px 1fr 44px 54px 44px; align-items: center; gap: 6px; }
+.chip .v { font-weight: 800; }
+.chip .s { font-size: 12px; color: var(--muted); }
+.chip .c { text-align: center; font-size: 20px; font-weight: 800; }
+.chip .btn { padding: 8px 0; font-size: 20px; border-radius: 10px; }
+.sum { margin-top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; }
+.sum b { font-size: 22px; }
+
+.toast { position: absolute; left: 16px; right: 16px; bottom: 18px; background: #1f1f25; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; transform: translateY(140%); transition: transform .25s; z-index: 8; font-size: 14px; }
+.toast.on { transform: translateY(0); }
+.toast button { background: none; border: 0; color: var(--red-soft); font: inherit; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div class="phone"><div class="app">
+  <div class="top">
+    <div class="brand"><span>♠</span> POKER <span>&amp;</span> FRIENDS</div>
+    <div class="conn" id="conn" onclick="toggleConn()"><i></i><span>Laptop verbunden</span></div>
+  </div>
+  <div class="seg">
+    <button class="on" onclick="mode('t', this)">Turnier</button>
+    <button onclick="mode('c', this)">Cash Game</button>
+  </div>
+
+  <!-- TURNIER -->
+  <div class="screen on" id="scr-t">
+    <div class="status">
+      <div class="lvl">LEVEL <b id="lv">3</b></div>
+      <div class="time" id="time">18:42</div>
+      <div class="blinds" id="bl">20 / 40 · Ante 40</div>
+      <div class="next" id="nx">Nächstes: 25 / 50 · Ante 50</div>
+      <div class="hint" id="hint"></div>
+    </div>
+
+    <div class="row r5">
+      <button class="btn" onclick="lvl(-1)">◀◀</button>
+      <button class="btn" onclick="min(-1)">−1</button>
+      <button class="btn red" id="play" onclick="play()">❚❚</button>
+      <button class="btn" onclick="min(1)">+1</button>
+      <button class="btn" onclick="lvl(1)">▶▶</button>
+    </div>
+
+    <div class="lbl">SPIELER · 8 von 9 im Spiel</div>
+    <div class="row r2">
+      <button class="btn big" onclick="pick('Rebuy', 'Wer kauft nach?', alive, 'rebuy')">Rebuy<small>bis Level 4</small></button>
+      <button class="btn big red" onclick="outFlow()">Out<small>Rauswurf</small></button>
+      <button class="btn big" onclick="pick('Add-On', 'Wer nimmt das Add-On?', alive, 'addon')">Add-On<small>in der Pause</small></button>
+      <button class="btn big" onclick="late()">Nachzügler<small>bis Level 4</small></button>
+    </div>
+
+    <div class="lbl">GELD</div>
+    <div class="money">
+      <div><small>Preispool</small><b>165 €</b></div>
+      <div><small>Mystery-Pool</small><b>55 €</b></div>
+      <div><small>Rebuys / Add-Ons</small><b>2 / 0</b></div>
+      <div><small>Ø Stack</small><b>2.750 (69 BB)</b></div>
+    </div>
+
+    <div class="foot">
+      <button class="btn" onclick="toast('Rückgängig: Rebuy Tom', false)">↶ Rückgängig</button>
+      <button class="btn" id="snd" onclick="sound(this)">🔊 Ton an</button>
+    </div>
+  </div>
+
+  <!-- CASH GAME -->
+  <div class="screen" id="scr-c">
+    <div class="status">
+      <div class="lvl">CASH GAME <b>5 / 10</b></div>
+      <div class="time" id="ctime" style="font-size:44px">1:24:00</div>
+      <div class="next" id="cnext">Spielzeit läuft · 5 am Tisch</div>
+    </div>
+    <div class="money">
+      <div><small>Eingezahlt</small><b>80 €</b></div>
+      <div><small>In der Kasse</small><b>62,40 €</b></div>
+    </div>
+    <div class="row r2">
+      <button class="btn big red" onclick="pick('Spieler setzt sich', '10 € = 1.000 Chips', roster, 'join')">+ Spieler setzt sich</button>
+      <button class="btn big" id="cplay" onclick="cplay()">❚❚ Spielzeit<small>läuft</small></button>
+    </div>
+    <div class="lbl">AM TISCH</div>
+    <div class="plist" id="cashlist"></div>
+  </div>
+</div>
+
+<div class="sheet-bg" id="sbg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="h"><b id="sh-t">Titel</b><span id="sh-s"></span></div>
+  <div class="body" id="sh-b"></div>
+  <div class="end" id="sh-e"></div>
+</div>
+<div class="toast" id="toast"><span id="toast-t"></span><button id="toast-u" onclick="hideToast()">Rückgängig</button></div>
+</div>
+
+<div class="notes">
+  <h2>Handy-Fernbedienung (Mockup Stufe 2)</h2>
+  <p>Links ist das Handy. Alles ist klickbar. Mit dem grünen Punkt oben rechts kannst du "Verbindung weg" simulieren.</p>
+
+  <h2>Verbinden</h2>
+  <p>Auf dem Laptop gibt es im Steuermenü <b>"Handy verbinden" (Taste H)</b>. Dann erscheint dieser Dialog:</p>
+  <div class="laptop">
+    <div class="qr"></div>
+    <div><div class="t">Handy verbinden</div><small>Mit der Handy-Kamera scannen.<br>Handy und Laptop müssen im selben WLAN sein.</small><small>http://192.168.178.x:4747</small></div>
+  </div>
+  <p style="margin-top:10px">Danach am Handy "Zum Startbildschirm hinzufügen", dann reicht ein Tipp aufs Symbol. Der Schlüssel aus dem QR-Code bleibt gespeichert, bis du am Laptop "Handys trennen" wählst.</p>
+
+  <h2>Grundsätze</h2>
+  <ul>
+    <li>Laptop bleibt das Gehirn, das Handy ist nur Fernbedienung. Handy weg = nichts verloren</li>
+    <li>Alles, was am Handy passiert, sieht man sofort am Laptop und umgekehrt</li>
+    <li>Nach jeder Aktion kurz unten "Rebuy Tom ✓ <b>Rückgängig</b>"</li>
+    <li>Bildschirm bleibt an, solange die Fernbedienung offen ist</li>
+    <li>Nur Spieler, für die die Aktion gerade erlaubt ist, sind antippbar</li>
+  </ul>
+
+  <h2>Fragen an dich</h2>
+  <ul>
+    <li>Passt die Aufteilung (Uhr oben, Spieler-Buttons Mitte, Geld unten)?</li>
+    <li>Out in 3 Schritten: Wer ist raus, von wem, ab Level 5 Umschlag-Betrag. Okay?</li>
+    <li>Fehlt dir am Handy etwas aus dem Steuermenü (z. B. Einstellungen, Turnier beenden)? Bewusst weggelassen, das bleibt am Laptop</li>
+  </ul>
+</div>
+
+<script>
+const roster = ["Anna", "Ben", "Chris", "Dani", "Eric", "Flo", "Jana", "Max", "Tom", "Lisa"];
+const alive = ["Anna", "Ben", "Chris", "Dani", "Eric", "Flo", "Max", "Tom"];
+const levels = [["5 / 10", 10], ["10 / 20", 20], ["20 / 40", 40], ["25 / 50", 50], ["PAUSE"], ["25 / 50", 50], ["50 / 100", 100], ["100 / 200", 200]];
+let li = 2, sec = 18 * 60 + 42, running = true, chosen = [];
+const $ = id => document.getElementById(id);
+const fmt = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+const lname = i => levels[i][0] === "PAUSE" ? "PAUSE" : (i < 4 ? i + 1 : i);
+function render() {
+  const L = levels[li], N = levels[li + 1];
+  $("lv").textContent = lname(li);
+  $("bl").textContent = L[0] === "PAUSE" ? "Pause · Add-On möglich" : L[0] + " · Ante " + L[1];
+  $("nx").textContent = N ? "Nächstes: " + (N[0] === "PAUSE" ? "Pause 10 Min" : N[0] + " · Ante " + N[1]) : "";
+  $("time").textContent = fmt(sec);
+  $("time").classList.toggle("paused", !running);
+  $("hint").textContent = running ? "" : "Uhr angehalten";
+  $("play").textContent = running ? "❚❚" : "▶";
+}
+setInterval(() => { if (running && sec > 0) { sec--; render(); } }, 1000);
+function play() { running = !running; render(); toast(running ? "Uhr läuft" : "Uhr angehalten", false); }
+function lvl(d) { li = Math.max(0, Math.min(levels.length - 1, li + d)); sec = levels[li][0] === "PAUSE" ? 600 : 1800; render(); }
+function min(d) { sec = Math.max(0, sec + 60 * d); render(); }
+function sound(b) { const on = b.textContent.includes("an"); b.textContent = on ? "🔇 Ton aus" : "🔊 Ton an"; }
+function mode(m, b) { document.querySelectorAll(".seg button").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("scr-t").classList.toggle("on", m === "t"); $("scr-c").classList.toggle("on", m === "c"); }
+function toggleConn() { const c = $("conn"); c.classList.toggle("off"); c.querySelector("span").textContent = c.classList.contains("off") ? "Verbindung weg, verbinde neu…" : "Laptop verbunden"; }
+
+function openSheet(t, s, body, end) { $("sh-t").textContent = t; $("sh-s").textContent = s; $("sh-b").innerHTML = body; $("sh-e").innerHTML = end; $("sheet").classList.add("on"); $("sbg").classList.add("on"); }
+function closeSheet() { $("sheet").classList.remove("on"); $("sbg").classList.remove("on"); }
+const tiles = (names, fn, sub) => '<div class="tiles">' + names.map(n => `<button class="tile" onclick="${fn}('${n}')">${n}${sub ? "<small>" + sub(n) + "</small>" : ""}</button>`).join("") + "</div>";
+const closeBtn = '<button class="btn ghost" onclick="closeSheet()">Schließen</button>';
+
+function pick(title, sub, names, act) {
+  window._act = act; window._title = title;
+  const stacks = n => act === "rebuy" ? (n === "Tom" ? "0 Chips" : "") : "";
+  openSheet(title, sub, tiles(names, "picked", act === "rebuy" ? stacks : null), closeBtn);
+}
+function picked(n) {
+  closeSheet();
+  if (window._act === "join") cash.push({ n, in: 10, out: null }), renderCash();
+  toast(window._title + " " + n + " ✓");
+}
+function late() { openSheet("Nachzügler", "20 € · 2.000 Chips", tiles(roster.filter(n => !alive.includes(n) && n !== "Jana"), "picked") + '<button class="btn" style="width:100%;margin-top:8px">+ Neuer Name</button>', closeBtn); window._title = "Nachzügler"; window._act = "late"; }
+
+function outFlow() { openSheet("Out", "Schritt 1 von 3", '<div class="step">Wer ist raus?</div>' + tiles(alive, "outBy"), closeBtn); }
+function outBy(n) { window._out = n; openSheet("Out: " + n, "Schritt 2 von 3", '<div class="step">Rausgeworfen von</div>' + tiles(alive.filter(x => x !== n), "outEnv"), '<button class="btn ghost" onclick="outFlow()">Zurück</button>' + closeBtn); }
+let amt = "";
+function outEnv(by) {
+  window._by = by; amt = "";
+  if (li < 5) { closeSheet(); toast("Out " + window._out + " (von " + by + ") ✓"); return; }
+  openSheet("Umschlag für " + by, "Schritt 3 von 3", '<div class="step">Betrag aus dem Umschlag</div><div class="amount" id="amt">0 €</div><div class="pad">' +
+    [1,2,3,4,5,6,7,8,9,"⌫",0,"✓"].map(k => `<button class="btn${k === "✓" ? " red" : ""}" onclick="key('${k}')">${k}</button>`).join("") + "</div>",
+    '<button class="btn ghost" onclick="outBy(window._out)">Zurück</button>' + closeBtn);
+}
+function key(k) {
+  if (k === "✓") { closeSheet(); toast("Out " + window._out + ", " + window._by + " zieht " + (amt || 0) + " € ✓"); return; }
+  amt = k === "⌫" ? amt.slice(0, -1) : (amt + k).slice(0, 3);
+  $("amt").textContent = (amt || 0) + " €";
+}
+
+const cash = [{ n: "Anna", in: 20, out: null }, { n: "Ben", in: 10, out: null }, { n: "Chris", in: 10, out: null }, { n: "Dani", in: 20, out: null }, { n: "Max", in: 10, out: null }, { n: "Tom", in: 10, out: 17.60 }];
+const eur = v => v.toFixed(2).replace(".", ",") + " €";
+function renderCash() {
+  $("cashlist").innerHTML = cash.map((p, i) => `<div class="p${p.out !== null ? " gone" : ""}"><div><div class="n">${p.n}</div><div class="d">Eingezahlt ${p.in} €${p.out !== null ? " · Ausgezahlt " + eur(p.out) : ""}</div></div>` +
+    (p.out !== null ? '<div class="d">gegangen</div>' : `<div class="acts"><button class="btn" onclick="rebuyC(${i})">Nachkauf</button><button class="btn red" onclick="counter(${i})">Auszahlen</button></div>`) + "</div>").join("");
+}
+function rebuyC(i) { cash[i].in += 10; renderCash(); toast("Nachkauf " + cash[i].n + " ✓"); }
+const denoms = [5, 10, 25, 50, 100, 500, 1000];
+let counts = {};
+function counter(i) {
+  window._ci = i; counts = {}; denoms.forEach(d => counts[d] = 0);
+  openSheet("Auszahlen: " + cash[i].n, "Eingezahlt " + cash[i].in + " €", '<div class="chips">' + denoms.map(d =>
+    `<div class="chip"><div><div class="v">${d.toLocaleString("de-DE")}</div><div class="s">${eur(d / 100)}</div></div><div></div><button class="btn" onclick="cnt(${d},-1)">−</button><div class="c" id="c${d}">0</div><button class="btn" onclick="cnt(${d},1)">+</button></div>`).join("") +
+    '</div><div class="sum"><div><small style="color:var(--muted)">Auszahlung</small><br><b id="pay">0,00 €</b></div><div style="text-align:right"><small style="color:var(--muted)">Ergebnis</small><br><b id="res">-</b></div></div>',
+    closeBtn + '<button class="btn red" onclick="payout()">Auszahlen</button>');
+  calc();
+}
+function cnt(d, x) { counts[d] = Math.max(0, counts[d] + x); $("c" + d).textContent = counts[d]; calc(); }
+function calc() {
+  const v = denoms.reduce((a, d) => a + counts[d] * d, 0) / 100, r = v - cash[window._ci].in;
+  $("pay").textContent = eur(v); $("res").textContent = (r >= 0 ? "+" : "") + eur(r); $("res").style.color = r >= 0 ? "var(--plus)" : "var(--red-soft)";
+}
+function payout() { const p = cash[window._ci]; p.out = denoms.reduce((a, d) => a + counts[d] * d, 0) / 100; closeSheet(); renderCash(); toast("Auszahlung " + p.n + " " + eur(p.out) + " ✓"); }
+
+let csec = 84 * 60, crun = true;
+const hms = s => Math.floor(s / 3600) + ":" + String(Math.floor(s / 60) % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+function renderC() {
+  const b = $("cplay");
+  $("ctime").textContent = hms(csec);
+  $("ctime").classList.toggle("paused", !crun);
+  $("cnext").textContent = (crun ? "Spielzeit läuft" : "Spielzeit angehalten") + " · " + cash.filter(p => p.out === null).length + " am Tisch";
+  b.innerHTML = crun ? "❚❚ Spielzeit<small>läuft</small>" : "▶ Spielzeit<small>angehalten</small>";
+  b.classList.toggle("red", !crun);
+}
+setInterval(() => { if (crun) { csec++; renderC(); } }, 1000);
+function cplay() { crun = !crun; renderC(); toast(crun ? "Spielzeit läuft weiter" : "Spielzeit angehalten", false); }
+
+let tt;
+function toast(t, undo = true) { $("toast-t").textContent = t; $("toast-u").style.display = undo ? "" : "none"; $("toast").classList.add("on"); clearTimeout(tt); tt = setTimeout(hideToast, 4000); }
+function hideToast() { $("toast").classList.remove("on"); }
+render(); renderCash(); renderC();
+</script>
+</body>
+</html>

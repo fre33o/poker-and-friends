@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poker &amp; Friends Cash Game</title>
+<style>
+  :root {
+    --bg: #070708; --panel: #121215; --panel-2: #1a1a1f; --line: #2a2a31;
+    --text: #f4f4f6; --muted: #8d8d97; --red: #d4142f; --red-soft: #ff3b55; --red-dark: #5c0a16;
+    --plus: #3ecf7a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+  body {
+    font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif; font-variant-numeric: tabular-nums;
+    display: grid; grid-template-rows: 9vh 1fr 15vh;
+    background: radial-gradient(ellipse at 50% 40%, #1c0509 0%, var(--bg) 60%);
+  }
+  body.hide-cursor { cursor: none; }
+
+  header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 3vw; border-bottom: 1px solid var(--line); }
+  .head-left, .head-right { display: flex; align-items: center; gap: 1.2vw; }
+  .head-right { justify-self: end; }
+  .brand { display: flex; align-items: center; gap: 1vw; font-weight: 800; letter-spacing: .12em; font-size: 2.4vh; }
+  .brand .suit, .brand .amp { color: var(--red); }
+  .brand .suit { font-size: 3.6vh; }
+  .mode { font-size: 3.4vh; font-weight: 800; letter-spacing: .2em; padding-left: .2em; }
+  .mode span { color: var(--red); }
+  .walltime { font-size: 2.6vh; color: var(--muted); font-weight: 600; }
+  .icon-btn {
+    width: 5.4vh; height: 5.4vh; background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+    border-radius: .8vh; font-size: 2.8vh; cursor: pointer; display: grid; place-items: center; font-family: inherit;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--red); }
+  .icon-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+  /* Steuermenü links: Bereiche mit Überschrift, Befehl links, Taste rechts */
+  .menubar {
+    position: fixed; top: 9vh; bottom: 0; left: 0; width: 21vw; z-index: 6;
+    display: flex; flex-direction: column; gap: 1.6vh; overflow-y: auto;
+    background: rgba(14,14,17,.98); border-right: 1px solid var(--line); box-shadow: 2vw 0 4vw rgba(0,0,0,.6);
+    padding: 2.2vh 1.4vw; transform: translateX(-105%); transition: transform .3s ease;
+  }
+  .menubar.show { transform: translateX(0); }
+  .menu-section h4 {
+    font-size: 1.5vh; letter-spacing: .25em; text-transform: uppercase; color: var(--red-soft);
+    font-weight: 800; margin: 0 0 .8vh .8vw;
+  }
+  .menu-section { display: flex; flex-direction: column; gap: .2vh; }
+  .menubar button {
+    background: transparent; border: 0; color: var(--text); font-family: inherit; font-size: 1.95vh; text-align: left;
+    padding: .75vh .8vw; border-radius: .7vh; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 1vw;
+  }
+  .menubar button:hover { background: var(--panel-2); }
+  .menubar button:hover kbd { border-color: var(--red); }
+  .menubar kbd { min-width: 3.2vh; text-align: center; color: var(--muted); }
+  .menubar .menu-section.dim button { color: var(--muted); }
+  kbd { background: var(--panel-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: .4vh; padding: .1vh .5vw; color: var(--text); font-family: inherit; font-weight: 700; font-size: 1.6vh; justify-self: start; }
+
+  main { padding: 3vh 3vw; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .table-head, .row { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.1fr; align-items: center; gap: 1vw; padding: 0 1.6vw; }
+  .table-head { font-size: 1.8vh; letter-spacing: .2em; color: var(--muted); font-weight: 700; text-transform: uppercase; padding-bottom: 1.2vh; }
+  .table-head span:not(:first-child), .row span:not(:first-child) { text-align: right; }
+  .rows { display: flex; flex-direction: column; gap: 1vh; overflow-y: auto; }
+  .row { background: var(--panel); border: 1px solid var(--line); border-radius: 1.2vh; height: 7.2vh; font-size: 3.2vh; }
+  .row .name { font-weight: 800; }
+  .row.left { opacity: .45; }
+  .row .status { font-size: 2.2vh; font-weight: 700; }
+  .status.play { color: var(--text); }
+  .status.out { color: var(--muted); }
+  .pos { color: var(--plus); font-weight: 800; }
+  .neg { color: var(--red-soft); font-weight: 800; }
+  .muted { color: var(--muted); }
+  .empty-state { color: var(--muted); font-size: 2.4vh; text-align: center; margin-top: 10vh; }
+
+  footer { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); }
+  .stat { display: flex; flex-direction: column; justify-content: center; padding: 0 2vw; border-right: 1px solid var(--line); }
+  .stat:last-child { border-right: 0; }
+  .stat .label { font-size: 1.8vh; letter-spacing: .2em; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+  .stat .value { font-size: 4.6vh; font-weight: 800; }
+  .stat .value small { font-size: 2.4vh; color: var(--muted); font-weight: 600; }
+  .stat.kasse { background: linear-gradient(160deg, #24070d, transparent); }
+  .stat.kasse .value { color: var(--red-soft); }
+  .stat.time { cursor: pointer; transition: background .2s; }
+  .stat.time:hover { background: var(--panel); }
+  .stat.time .start { color: var(--red-soft); font-size: 3.6vh; }
+  .stat.time.paused .value { opacity: .5; }
+
+  .toast {
+    position: fixed; top: 11vh; left: 50%; transform: translateX(-50%) translateY(-2vh); z-index: 20;
+    background: var(--red); color: #fff; font-weight: 700; font-size: 2.6vh; padding: 1.2vh 2vw; border-radius: 1vh;
+    opacity: 0; transition: all .3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.78); display: none; align-items: center; justify-content: center; z-index: 10; cursor: default; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--line); border-top: .6vh solid var(--red); border-radius: 1.4vh; padding: 3vh 2.4vw; width: 56vw; max-height: 88vh; overflow-y: auto; }
+  .modal h2 { font-size: 3.4vh; margin-bottom: .6vh; }
+  .modal p { color: var(--muted); font-size: 2vh; margin-bottom: 2vh; }
+  .pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vh .8vw; }
+  .pick button, .chip {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: .8vh;
+    padding: 1.6vh .6vw; font-size: 2.2vh; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .pick button:hover, .pick button:focus { border-color: var(--red); background: #24070d; outline: none; }
+  .pick button small { display: block; color: var(--muted); font-weight: 500; font-size: 1.6vh; margin-top: .3vh; }
+  .chips { display: flex; flex-wrap: wrap; gap: 1vh .6vw; margin: 1vh 0 2vh; }
+  .chip { border-radius: 5vh; padding: 1.1vh 1.2vw; }
+  .add-row { display: flex; gap: .8vw; }
+  input { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: .5vh; padding: 1.1vh 1vw; font-family: inherit; font-size: 2.1vh; font-variant-numeric: tabular-nums; }
+  input:focus { outline: none; border-color: var(--red); }
+  .add-row input { flex: 1; }
+  .btn { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: .7vh; padding: 1.1vh 1.4vw; font-family: inherit; font-size: 2vh; font-weight: 700; cursor: pointer; }
+  .btn:hover { border-color: var(--red); }
+  .btn.primary { background: var(--red); border-color: var(--red); }
+  .esc { margin-top: 2vh; font-size: 1.7vh; color: var(--muted); }
+  .modal-foot { display: flex; justify-content: flex-end; margin-top: 2.4vh; }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2.4vh; }
+
+  /* Chip-Zähler */
+  .counter { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1vh .6vw; }
+  .denom { background: var(--panel-2); border: 1px solid var(--line); border-radius: 1vh; padding: 1.4vh .4vw; text-align: center; }
+  .disc { width: 6.4vh; height: 6.4vh; margin: 0 auto 1vh; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 1.8vh;
+    border: .55vh dashed rgba(255,255,255,.55); background: var(--red-dark); }
+  .denom input { width: 100%; text-align: center; font-size: 2.6vh; font-weight: 800; padding: .8vh 0; }
+  .steps { display: flex; gap: .3vw; margin-top: .8vh; }
+  .steps button { flex: 1; background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: .5vh; font-size: 2.2vh; cursor: pointer; padding: .4vh 0; }
+  .steps button:hover { border-color: var(--red); }
+  .denom .sub { font-size: 1.6vh; color: var(--muted); margin-top: .6vh; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2.4vh; padding: 2vh 1.6vw; background: var(--panel-2); border-radius: 1vh; font-size: 2.4vh; }
+  .total b { font-size: 5vh; }
+  .result-table { width: 100%; border-collapse: collapse; font-size: 2.4vh; margin-top: 1vh; }
+  .result-table td, .result-table th { padding: 1vh 1vw; border-bottom: 1px solid var(--line); text-align: right; }
+  .result-table th { color: var(--muted); font-size: 1.6vh; letter-spacing: .15em; text-transform: uppercase; }
+  .result-table td:first-child, .result-table th:first-child { text-align: left; font-weight: 700; }
+  .check { margin-top: 2vh; padding: 1.6vh 1.4vw; border-radius: 1vh; font-size: 2.2vh; font-weight: 700; }
+  .check.ok { background: #0d2617; color: var(--plus); }
+  .check.bad { background: #2a0a11; color: var(--red-soft); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="head-left">
+      <button class="icon-btn" id="menuBtn" title="Steuermenü">&#9776;</button>
+      <div class="brand"><span class="suit">&spades;</span> POKER <span class="amp">&amp;</span> FRIENDS</div>
+    </div>
+    <div class="mode">CASH GAME <span id="blindsTag">5 / 10</span></div>
+    <div class="head-right"><div class="walltime" id="walltime">--:--</div></div>
+    <nav class="menubar" id="menubar">
+      <div class="menu-section">
+        <h4>Spieler</h4>
+        <button data-act="join">Spieler setzt sich <kbd>N</kbd></button>
+        <button data-act="rebuy">Nachkauf <kbd>R</kbd></button>
+        <button data-act="cashout">Auszahlen <kbd>C</kbd></button>
+      </div>
+      <div class="menu-section">
+        <h4>Spielzeit</h4>
+        <button data-act="clock">Start / Stopp <kbd>S</kbd></button>
+      </div>
+      <div class="menu-section">
+        <h4>Anzeige</h4>
+        <button data-act="full">Vollbild <kbd>F</kbd></button>
+      </div>
+      <div class="menu-section">
+        <h4>Verwaltung</h4>
+        <button data-act="end">Abend beenden <kbd>X</kbd></button>
+        <button data-act="tournament">Zur Turnier-Uhr <kbd>T</kbd></button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="table-head"><span>Spieler</span><span>Eingezahlt</span><span>Ausgezahlt</span><span>Ergebnis</span><span>Status</span></div>
+    <div class="rows" id="rows"></div>
+  </main>
+
+  <footer>
+    <div class="stat"><div class="label">Am Tisch</div><div class="value" id="sTable"></div></div>
+    <div class="stat"><div class="label">Eingezahlt</div><div class="value" id="sIn"></div></div>
+    <div class="stat"><div class="label">Ausgezahlt</div><div class="value" id="sOut"></div></div>
+    <div class="stat kasse"><div class="label">In der Kasse</div><div class="value" id="sKasse"></div></div>
+    <div class="stat time" id="timeStat" title="Klick oder Taste S: Spielzeit starten / anhalten"><div class="label" id="sTimeLabel">Spielzeit</div><div class="value" id="sTime"></div></div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<script>
+// Mockup Cash Game: 1 Chip-Einheit = 1 Cent. Buy-in 10 EUR = 1.000 Chips, Nachkauf nur bei 0 Chips.
+const CFG = { sb: 5, bb: 10, buyIn: 1000, maxSeats: 10 };
+const DENOMS = [5, 10, 25, 50, 100, 500, 1000];
+
+let players = []; // { name, inCents, outCents, seated, cashedOut }
+// Spielzeit wird manuell gestartet und kann angehalten werden
+const clock = { elapsed: 0, since: null };
+const elapsedMs = () => clock.elapsed + (clock.since ? Date.now() - clock.since : 0);
+function toggleClock() {
+  if (clock.since) { clock.elapsed = elapsedMs(); clock.since = null; toast("Spielzeit angehalten"); }
+  else { clock.since = Date.now(); toast(clock.elapsed ? "Spielzeit läuft weiter" : "Spielzeit gestartet"); }
+  render();
+}
+
+const $ = id => document.getElementById(id);
+const eur = cents => (cents / 100).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+const eurShort = cents => cents % 100 === 0 ? (cents / 100).toLocaleString("de-DE") + " €" : eur(cents);
+const signed = cents => (cents > 0 ? "+" : cents < 0 ? "-" : "±") + eur(Math.abs(cents));
+const fmtClock = d => d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+const seated = () => players.filter(p => p.seated);
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+function loadRoster() { try { return JSON.parse(localStorage.getItem("pf.roster")) || []; } catch { return []; } }
+function saveRoster() { try { localStorage.setItem("pf.roster", JSON.stringify(roster)); } catch {} }
+let roster = loadRoster();
+
+function render() {
+  const rows = $("rows");
+  if (!players.length) {
+    rows.innerHTML = "<div class='empty-state'>Noch niemand am Tisch. <kbd>N</kbd> oder Menü &#9776; &rarr; „Spieler setzt sich“</div>";
+  } else {
+    const sorted = [...players].sort((a, b) => (b.seated - a.seated));
+    rows.innerHTML = sorted.map(p => {
+      const res = p.outCents - p.inCents;
+      return "<div class='row" + (p.seated ? "" : " left") + "'>" +
+        "<span class='name'>" + escapeHtml(p.name) + "</span>" +
+        "<span>" + eurShort(p.inCents) + "</span>" +
+        "<span>" + (p.cashedOut ? eur(p.outCents) : "<span class='muted'>-</span>") + "</span>" +
+        "<span>" + (p.cashedOut ? "<span class='" + (res >= 0 ? "pos" : "neg") + "'>" + signed(res) + "</span>" : "<span class='muted'>läuft</span>") + "</span>" +
+        "<span class='status " + (p.seated ? "play'>am Tisch" : "out'>gegangen") + "</span></div>";
+    }).join("");
+  }
+  const totalIn = players.reduce((a, p) => a + p.inCents, 0);
+  const totalOut = players.reduce((a, p) => a + p.outCents, 0);
+  $("sTable").innerHTML = seated().length + " <small>/ " + CFG.maxSeats + "</small>";
+  $("sIn").textContent = eurShort(totalIn);
+  $("sOut").textContent = eurShort(totalOut);
+  $("sKasse").textContent = eurShort(totalIn - totalOut);
+  const ms = elapsedMs();
+  if (!clock.since && !ms) {
+    $("sTimeLabel").textContent = "Spielzeit";
+    $("sTime").innerHTML = "<span class='start'>&#9654; Starten</span>";
+  } else {
+    const s = Math.floor(ms / 1000);
+    $("sTimeLabel").textContent = clock.since ? "Spielzeit" : "Spielzeit (angehalten)";
+    $("sTime").innerHTML = Math.floor(s / 3600) + ":" + String(Math.floor(s / 60) % 60).padStart(2, "0") +
+      "<small>:" + String(s % 60).padStart(2, "0") + " " + (clock.since ? "&#10074;&#10074;" : "&#9654;") + "</small>";
+  }
+  $("timeStat").classList.toggle("paused", !clock.since && ms > 0);
+  $("walltime").textContent = fmtClock(new Date());
+}
+
+let toastTimer;
+function toast(t) { $("toast").textContent = t; $("toast").classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => $("toast").classList.remove("show"), 3200); }
+
+let modalOpen = false;
+function openModal(html) { modalOpen = true; $("modal").innerHTML = html; $("modalBg").classList.add("show"); }
+// Schließen-Buttons in allen Dialogen
+document.getElementById("modal").addEventListener("click", e => { if (e.target.closest("[data-close]")) closeModal(); });
+function closeModal() { modalOpen = false; $("modalBg").classList.remove("show"); }
+
+function pickPlayer(title, hint, list, info, onPick) {
+  if (!list.length) return toast("Niemand passend am Tisch");
+  openModal("<h2>" + title + "</h2><p>" + hint + "</p><div class='pick'>" +
+    list.map((p, i) => "<button data-i='" + i + "'>" + escapeHtml(p.name) + "<small>" + info(p) + "</small></button>").join("") +
+    "</div><div class='modal-foot'><button class='btn' data-close>Schließen</button></div>");
+  $("modal").querySelectorAll(".pick button").forEach(b => b.onclick = () => { closeModal(); onPick(list[+b.dataset.i]); });
+}
+
+// Spieler setzt sich (neu oder erneut)
+function doJoin() {
+  if (seated().length >= CFG.maxSeats) return toast("Tisch voll, maximal " + CFG.maxSeats + " Spieler");
+  const free = roster.filter(n => !players.some(p => p.name === n && p.seated));
+  const join = name => {
+    let p = players.find(x => x.name === name);
+    if (!p) { p = { name, inCents: 0, outCents: 0, seated: false, cashedOut: false }; players.push(p); }
+    p.seated = true; p.cashedOut = false; p.inCents += CFG.buyIn;
+    closeModal(); toast(name + " setzt sich: 10 € = 1.000 Chips"); render();
+  };
+  openModal("<h2>Spieler setzt sich</h2><p>Buy-in 10 € für 1.000 Chips (5er = 5 ct ... 1000er = 10 €).</p>" +
+    "<div class='chips'>" + free.map((n, i) => "<button class='chip' data-i='" + i + "'>" + escapeHtml(n) + "</button>").join("") + "</div>" +
+    "<div class='add-row'><input id='newName' placeholder='Neuer Spieler, Enter' maxlength='20'><button class='btn' id='addName'>Hinsetzen</button>" +
+    (roster.length ? "" : "<button class='btn' id='demo'>Demo-Namen</button>") + "</div><div class='modal-foot'><button class='btn' data-close>Schließen</button></div>");
+  $("modal").querySelectorAll(".chip").forEach(c => c.onclick = () => join(free[+c.dataset.i]));
+  const add = () => {
+    const name = $("newName").value.trim(); if (!name) return;
+    if (players.some(p => p.name === name && p.seated)) return toast(name + " sitzt schon am Tisch");
+    if (!roster.includes(name)) { roster.push(name); saveRoster(); }
+    join(name);
+  };
+  $("addName").onclick = add;
+  $("newName").onkeydown = e => { if (e.key === "Enter") add(); };
+  if ($("demo")) $("demo").onclick = () => { roster = ["Max", "Anna", "Tom", "Lisa", "Ben", "Julia", "Paul", "Sarah"]; saveRoster(); closeModal(); doJoin(); };
+  $("newName").focus();
+}
+
+function doRebuy() {
+  pickPlayer("Nachkauf", "Nur wer 0 Chips hat. 10 € für 1.000 Chips.", seated(), p => "bisher " + eurShort(p.inCents), p => {
+    p.inCents += CFG.buyIn; toast(p.name + ": Nachkauf 10 €"); render();
+  });
+}
+
+// Auszahlen mit Chip-Zähler
+function doCashout() {
+  pickPlayer("Auszahlen", "Wer geht? Danach werden die Chips gezählt.", seated(), p => "eingezahlt " + eurShort(p.inCents), openCounter);
+}
+function openCounter(p) {
+  const counts = Object.fromEntries(DENOMS.map(d => [d, 0]));
+  openModal("<h2>Chips zählen: " + escapeHtml(p.name) + "</h2><p>Anzahl pro Chip eintippen oder mit + / - zählen. Pleite? Einfach alles auf 0 lassen.</p>" +
+    "<div class='counter'>" + DENOMS.map(d =>
+      "<div class='denom'><div class='disc'>" + d + "</div><input type='number' min='0' data-d='" + d + "' value='0'>" +
+      "<div class='steps'><button data-d='" + d + "' data-s='-1'>-</button><button data-d='" + d + "' data-s='1'>+</button></div>" +
+      "<div class='sub' id='sub" + d + "'>0,00 €</div></div>").join("") + "</div>" +
+    "<div class='total'><span>Auszahlung an " + escapeHtml(p.name) + "<br><span class='muted' id='resLine'></span></span><b id='totalEur'>0,00 €</b></div>" +
+    "<div class='foot'><button class='btn' data-close>Schließen</button><button class='btn primary' id='payBtn'>Auszahlen und verabschieden</button></div>");
+  const update = () => {
+    let sum = 0;
+    DENOMS.forEach(d => { sum += counts[d] * d; $("sub" + d).textContent = eur(counts[d] * d); });
+    $("totalEur").textContent = eur(sum);
+    const res = sum - p.inCents;
+    $("resLine").innerHTML = "Eingezahlt " + eurShort(p.inCents) + ", Ergebnis <span class='" + (res >= 0 ? "pos" : "neg") + "'>" + signed(res) + "</span>";
+    return sum;
+  };
+  $("modal").querySelectorAll("input[data-d]").forEach(inp => inp.oninput = () => { counts[inp.dataset.d] = Math.max(0, Math.floor(+inp.value || 0)); update(); });
+  $("modal").querySelectorAll(".steps button").forEach(b => b.onclick = () => {
+    const d = b.dataset.d; counts[d] = Math.max(0, counts[d] + +b.dataset.s);
+    $("modal").querySelector("input[data-d='" + d + "']").value = counts[d]; update();
+  });
+  $("payBtn").onclick = () => {
+    const sum = update();
+    p.outCents += sum; p.seated = false; p.cashedOut = true;
+    closeModal(); toast(p.name + " bekommt " + eur(sum)); render();
+  };
+  update();
+  $("modal").querySelector("input[data-d='5']").select();
+}
+
+// Abend beenden: Kassen-Check
+function doEnd() {
+  const totalIn = players.reduce((a, p) => a + p.inCents, 0);
+  const totalOut = players.reduce((a, p) => a + p.outCents, 0);
+  const open = seated();
+  const diff = totalIn - totalOut;
+  openModal("<h2>Abend beenden</h2><p>Übersicht und Kassen-Check. Ohne Rake muss die Kasse am Ende genau leer sein.</p>" +
+    "<table class='result-table'><tr><th>Spieler</th><th>Eingezahlt</th><th>Ausgezahlt</th><th>Ergebnis</th></tr>" +
+    players.map(p => { const r = p.outCents - p.inCents; return "<tr><td>" + escapeHtml(p.name) + "</td><td>" + eurShort(p.inCents) + "</td><td>" + (p.cashedOut ? eur(p.outCents) : "noch am Tisch") + "</td><td class='" + (p.cashedOut ? (r >= 0 ? "pos" : "neg") : "muted") + "'>" + (p.cashedOut ? signed(r) : "-") + "</td></tr>"; }).join("") +
+    "</table>" +
+    (open.length ? "<div class='check bad'>Noch am Tisch: " + open.map(p => escapeHtml(p.name)).join(", ") + ". Erst alle auszahlen.</div>"
+      : diff === 0 ? "<div class='check ok'>Kasse stimmt: eingezahlt " + eurShort(totalIn) + " = ausgezahlt " + eurShort(totalOut) + "</div>"
+      : "<div class='check bad'>Differenz " + signed(diff) + ": " + (diff > 0 ? "Geld bleibt übrig, Chips fehlen beim Zählen?" : "Es wurde mehr ausgezahlt als eingezahlt. Zählfehler?") + "</div>") +
+    "<div class='modal-foot'><button class='btn' data-close>Schließen</button></div>");
+}
+
+const actions = {
+  join: doJoin, rebuy: doRebuy, cashout: doCashout, end: doEnd, clock: toggleClock,
+  full: () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(),
+  menu: () => { const on = $("menubar").classList.toggle("show"); $("menuBtn").classList.toggle("active", on); },
+  tournament: () => { location.href = "uhr.html"; },
+};
+const keys = { n: "join", r: "rebuy", c: "cashout", s: "clock", x: "end", f: "full", t: "tournament" };
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") return closeModal();
+  if (modalOpen) return;
+  const a = keys[e.key.toLowerCase()];
+  if (a) { e.preventDefault(); actions[a](); }
+});
+document.querySelectorAll("#menubar button").forEach(b => b.onclick = () => actions[b.dataset.act]());
+$("menuBtn").onclick = actions.menu;
+$("timeStat").onclick = toggleClock;
+
+// Menü schließt bei Klick auf eine freie Fläche, solange kein Dialog offen ist
+document.addEventListener("click", e => {
+  if (!$("menubar").classList.contains("show") || modalOpen) return;
+  if (e.composedPath().some(el => el.id === "menubar" || el.id === "menuBtn" || el.id === "modalBg")) return;
+  actions.menu();
+});
+
+let cursorTimer;
+document.addEventListener("mousemove", () => {
+  document.body.classList.remove("hide-cursor"); clearTimeout(cursorTimer);
+  cursorTimer = setTimeout(() => document.body.classList.add("hide-cursor"), 3000);
+});
+
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>

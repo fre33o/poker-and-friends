@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poker &amp; Friends</title>
+<style>
+  :root {
+    --bg: #070708;
+    --panel: #121215;
+    --panel-2: #1a1a1f;
+    --line: #2a2a31;
+    --text: #f4f4f6;
+    --muted: #8d8d97;
+    --red: #d4142f;
+    --red-soft: #ff3b55;
+    --red-dark: #5c0a16;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+  body {
+    font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    display: grid;
+    grid-template-rows: 9vh 1fr 15vh;
+    background: radial-gradient(ellipse at 35% 45%, #1c0509 0%, var(--bg) 60%);
+    cursor: default;
+  }
+  body.hide-cursor { cursor: none; }
+
+  /* Kopfzeile */
+  header {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 0 3vw; border-bottom: 1px solid var(--line); position: relative;
+  }
+  .brand { display: flex; align-items: center; gap: 1vw; font-weight: 800; letter-spacing: .12em; font-size: 2.4vh; }
+  .brand .suit { color: var(--red); font-size: 3.6vh; }
+  .brand .amp { color: var(--red); }
+  .level-tag { font-size: 3.4vh; font-weight: 800; letter-spacing: .2em; padding-left: .2em; }
+  .level-tag span { color: var(--red); }
+  .walltime { font-size: 2.6vh; color: var(--muted); font-weight: 600; }
+
+  /* Steuermenü links: Bereiche mit Überschrift, Befehl links, Taste rechts */
+  .menubar {
+    position: fixed; top: 9vh; bottom: 0; left: 0; width: 21vw; z-index: 6;
+    display: flex; flex-direction: column; gap: 1.6vh; overflow-y: auto;
+    background: rgba(14,14,17,.98); border-right: 1px solid var(--line); box-shadow: 2vw 0 4vw rgba(0,0,0,.6);
+    padding: 2.2vh 1.4vw; transform: translateX(-105%); transition: transform .3s ease;
+  }
+  .menubar.show { transform: translateX(0); }
+  .menu-section h4 {
+    font-size: 1.5vh; letter-spacing: .25em; text-transform: uppercase; color: var(--red-soft);
+    font-weight: 800; margin: 0 0 .8vh .8vw;
+  }
+  .menu-section { display: flex; flex-direction: column; gap: .2vh; }
+  .menubar button {
+    background: transparent; border: 0; color: var(--text); font-family: inherit; font-size: 1.95vh; text-align: left;
+    padding: .75vh .8vw; border-radius: .7vh; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 1vw;
+  }
+  .menubar button:hover { background: var(--panel-2); }
+  .menubar button:hover kbd { border-color: var(--red); }
+  .menubar kbd { min-width: 3.2vh; text-align: center; color: var(--muted); }
+  .menubar .menu-section.dim button { color: var(--muted); }
+  kbd { background: var(--panel-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: .4vh; padding: .1vh .5vw; color: var(--text); font-family: inherit; font-weight: 700; font-size: 1.6vh; }
+
+  /* Hauptbereich */
+  .head-right { display: flex; align-items: center; gap: 1.2vw; justify-self: end; }
+  .info-btn {
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted); border-radius: .8vh;
+    font-family: inherit; font-size: 1.8vh; font-weight: 700; padding: .9vh 1vw; cursor: pointer; letter-spacing: .08em;
+  }
+  .info-btn:hover, .info-btn.active { color: var(--text); border-color: var(--red); }
+  .info-btn.icon { width: 5.4vh; height: 5.4vh; padding: 0; font-size: 2.8vh; display: grid; place-items: center; }
+  .info-btn.active { background: var(--red); color: #fff; }
+  .head-left { display: flex; align-items: center; gap: 1.2vw; justify-self: start; }
+  main { display: grid; grid-template-columns: 1fr; min-height: 0; }
+  .clock-area { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2vh 2vw; }
+  .phase { padding-left: .3em; font-size: 2.6vh; letter-spacing: .3em; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+  .phase.rebuy { color: var(--red-soft); }
+  #countdown {
+    font-size: 27vh; font-weight: 800; line-height: 1; letter-spacing: -.02em;
+    margin: 1vh 0 2vh; transition: color .3s;
+  }
+  #countdown.warn { color: var(--red-soft); animation: pulse 1s ease-in-out infinite; }
+  #countdown.paused { opacity: .35; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  .progress { width: 62%; height: .9vh; background: var(--panel-2); border-radius: 1vh; overflow: hidden; }
+  .progress > div { height: 100%; background: var(--red); width: 0; transition: width .25s linear; }
+  .blinds { margin-top: 3.5vh; text-align: center; }
+  .blinds .label { font-size: 2.2vh; letter-spacing: .3em; color: var(--muted); font-weight: 700; }
+  .blinds .value { font-size: 11vh; font-weight: 800; line-height: 1.05; }
+  .blinds .ante { font-size: 3.6vh; font-weight: 700; color: var(--red-soft); margin-top: .4vh; }
+  .next { margin-top: 2.6vh; font-size: 2.8vh; color: var(--muted); }
+  .next b { color: var(--text); }
+
+  /* Seitenleiste */
+  aside {
+    position: fixed; top: 9vh; bottom: 15vh; right: 0; width: 27vw; z-index: 4;
+    background: rgba(7,7,8,.97); border-left: 1px solid var(--line); box-shadow: -2vw 0 4vw rgba(0,0,0,.6);
+    padding: 2.4vh 1.6vw; display: flex; flex-direction: column; gap: 1.8vh;
+    transform: translateX(105%); transition: transform .35s ease;
+  }
+  aside.show { transform: translateX(0); }
+
+  /* Check-in */
+  .modal.checkin { width: 60vw; }
+  .chips { display: flex; flex-wrap: wrap; gap: 1vh .6vw; margin: 1vh 0 2vh; min-height: 6vh; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); border-radius: 5vh;
+    padding: 1.1vh 1.2vw; font-family: inherit; font-size: 2.1vh; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: .6vw;
+  }
+  .chip.on { background: var(--red); border-color: var(--red); color: #fff; }
+  .chip .x { opacity: .5; font-weight: 400; }
+  .chip .x:hover { opacity: 1; }
+  .add-row { display: flex; gap: .8vw; }
+  .add-row input { flex: 1; font-size: 2.1vh; padding: 1.1vh 1vw; }
+  .checkin-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 2.6vh; font-size: 2.2vh; }
+  .checkin-foot b { color: var(--red-soft); }
+  .empty { color: var(--muted); font-size: 1.9vh; align-self: center; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 1.2vh; padding: 2vh 1.4vw; }
+  .card .label { font-size: 1.8vh; letter-spacing: .2em; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+  .card .big { font-size: 6vh; font-weight: 800; line-height: 1.15; }
+  .card.mystery { border-color: var(--red-dark); background: linear-gradient(160deg, #24070d, var(--panel)); }
+  .card.mystery .big { color: var(--red-soft); }
+  .payout { display: grid; grid-template-columns: auto 1fr; gap: .6vh 1vw; margin-top: 1vh; font-size: 2.6vh; }
+  .payout span:nth-child(odd) { color: var(--muted); }
+  .payout span:nth-child(even) { text-align: right; font-weight: 700; }
+  .env-label { margin-top: 1.6vh; font-size: 1.6vh; letter-spacing: .2em; color: var(--muted); font-weight: 700; }
+  .envelopes { display: flex; gap: .5vw; flex-wrap: wrap; margin-top: .8vh; }
+  .env { width: 2.6vw; height: 3.4vh; border-radius: .4vh; background: var(--red); position: relative; overflow: hidden; }
+  .env::after { content: ""; position: absolute; left: 0; top: 0; border-top: 1.8vh solid rgba(0,0,0,.3); border-left: 1.3vw solid transparent; border-right: 1.3vw solid transparent; }
+  .env.drawn { background: transparent; border: 1px dashed var(--line); }
+  .env.drawn::after { display: none; }
+  .env.pending { opacity: .35; }
+  .small { font-size: 2vh; color: var(--muted); margin-top: .8vh; }
+
+  /* Fußzeile */
+  footer { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); }
+  .stat { display: flex; flex-direction: column; justify-content: center; padding: 0 2vw; border-right: 1px solid var(--line); }
+  .stat:last-child { border-right: 0; }
+  .stat .label { font-size: 1.8vh; letter-spacing: .2em; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+  .stat .value { font-size: 4.6vh; font-weight: 800; }
+  .stat .value small { font-size: 2.4vh; color: var(--muted); font-weight: 600; }
+
+  /* Pause */
+  body.on-break .blinds, body.on-break .next { display: none; }
+  .break-info { display: none; margin-top: 3vh; gap: 1.4vh; flex-direction: column; align-items: center; font-size: 3vh; }
+  body.on-break .break-info { display: flex; }
+  .break-info .row { background: var(--panel); border: 1px solid var(--line); border-radius: 1vh; padding: 1.2vh 2vw; min-width: 50vw; display: flex; justify-content: space-between; gap: 2vw; }
+  .break-info .row b { color: var(--red-soft); }
+
+  .badge { position: fixed; top: 10vh; right: 1vw; background: var(--red); color: #fff; font-weight: 800; font-size: 1.6vh; padding: .4vh .7vw; border-radius: .4vh; letter-spacing: .1em; display: none; }
+  .badge.show { display: block; }
+  .toast {
+    position: fixed; top: 11vh; left: 50%; transform: translateX(-50%) translateY(-2vh);
+    background: var(--red); color: #fff; font-weight: 700; font-size: 2.6vh; padding: 1.2vh 2vw; border-radius: 1vh;
+    opacity: 0; transition: all .3s; pointer-events: none; z-index: 20;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Dialoge */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.78); display: none; align-items: center; justify-content: center; z-index: 10; cursor: default; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--line); border-top: .6vh solid var(--red); border-radius: 1.4vh; padding: 3vh 2.4vw; width: 52vw; }
+  .modal h2 { font-size: 3.4vh; margin-bottom: .6vh; }
+  .modal p { color: var(--muted); font-size: 2vh; margin-bottom: 2vh; }
+  .pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vh .8vw; }
+  .pick button {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: .8vh;
+    padding: 1.6vh .6vw; font-size: 2.2vh; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .pick button:hover, .pick button:focus { border-color: var(--red); background: #24070d; outline: none; }
+  .pick button small { display: block; color: var(--muted); font-weight: 500; font-size: 1.6vh; margin-top: .3vh; }
+  .esc { margin-top: 2vh; font-size: 1.7vh; color: var(--muted); }
+  .modal-foot { display: flex; justify-content: flex-end; margin-top: 2.4vh; }
+
+  .winner { text-align: center; }
+  .winner h2 { font-size: 5vh; color: var(--red-soft); }
+  .winner table { margin: 2vh auto 0; font-size: 2.8vh; border-collapse: collapse; }
+  .winner td { padding: .8vh 1.6vw; border-bottom: 1px solid var(--line); }
+  .winner td:last-child { text-align: right; font-weight: 800; }
+
+  /* Einstellungen */
+  .modal.settings { width: 78vw; height: 84vh; display: flex; flex-direction: column; padding: 2.6vh 2vw; }
+  .set-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.6vh; }
+  .set-head .live { font-size: 1.7vh; color: var(--muted); }
+  .set-head .live b { color: var(--red-soft); }
+  .tabs { display: flex; gap: .4vw; border-bottom: 1px solid var(--line); margin-bottom: 1.6vh; }
+  .tabs button {
+    background: none; border: 0; border-bottom: .4vh solid transparent; color: var(--muted);
+    font-family: inherit; font-size: 2vh; font-weight: 700; padding: 1vh 1vw; cursor: pointer;
+  }
+  .tabs button.active { color: var(--text); border-bottom-color: var(--red); }
+  .set-body { flex: 1; overflow-y: auto; min-height: 0; padding-right: .6vw; }
+  table.struct { width: 100%; border-collapse: collapse; font-size: 1.9vh; }
+  table.struct th { text-align: left; color: var(--muted); font-weight: 700; letter-spacing: .1em; font-size: 1.5vh; text-transform: uppercase; padding: .8vh .5vw; position: sticky; top: 0; background: var(--panel); }
+  table.struct td { padding: .5vh .5vw; border-top: 1px solid var(--line); }
+  table.struct tr.brk td { background: #19080c; }
+  table.struct tr.current td { background: #2a0a11; }
+  table.struct tr.past td { opacity: .4; }
+  table.struct .name { font-weight: 800; white-space: nowrap; }
+  table.struct .tag { font-size: 1.4vh; color: var(--red-soft); font-weight: 700; margin-left: .4vw; }
+  input, select {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: .5vh;
+    padding: .6vh .5vw; font-family: inherit; font-size: 1.9vh; font-variant-numeric: tabular-nums;
+  }
+  input[type=number] { width: 7vw; }
+  input.note { width: 100%; }
+  input:focus, select:focus { outline: none; border-color: var(--red); }
+  input:disabled { opacity: .6; }
+  .rowbtn { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: .5vh; font-family: inherit; font-size: 1.5vh; padding: .5vh .4vw; cursor: pointer; margin-left: .2vw; }
+  .rowbtn:hover { color: var(--text); border-color: var(--red); }
+  .set-foot { display: flex; align-items: center; gap: 1vw; margin-top: 1.6vh; padding-top: 1.6vh; border-top: 1px solid var(--line); font-size: 1.9vh; }
+  .set-foot .spacer { flex: 1; }
+  .btn { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: .7vh; padding: 1.1vh 1.4vw; font-family: inherit; font-size: 1.9vh; font-weight: 700; cursor: pointer; }
+  .btn:hover { border-color: var(--red); }
+  .btn.primary { background: var(--red); border-color: var(--red); }
+  .btn.primary:disabled { opacity: .4; cursor: not-allowed; }
+  .form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2vh 3vw; }
+  .group { background: var(--panel-2); border: 1px solid var(--line); border-radius: 1vh; padding: 2vh 1.4vw; }
+  .group h3 { font-size: 2vh; margin-bottom: 1.4vh; color: var(--red-soft); letter-spacing: .1em; text-transform: uppercase; }
+  .field { display: flex; align-items: center; justify-content: space-between; gap: 1vw; margin: 1vh 0; font-size: 1.9vh; }
+  .field span { color: var(--muted); }
+  .hint { font-size: 1.6vh; color: var(--muted); margin-top: 1vh; }
+  .warn-text { color: var(--red-soft); font-weight: 700; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="head-left">
+      <button class="info-btn icon" id="menuBtn" title="Steuermenü ein/aus">&#9776;</button>
+      <div class="brand"><span class="suit">&spades;</span> POKER <span class="amp">&amp;</span> FRIENDS</div>
+    </div>
+    <div class="level-tag" id="levelTag">LEVEL <span>1</span></div>
+    <div class="head-right">
+      <div class="walltime" id="walltime">--:--</div>
+      <button class="info-btn icon" id="infoBtn" title="Preispool und Mystery-Pool ein/aus (Taste I)">&euro;</button>
+    </div>
+    <nav class="menubar" id="menubar">
+      <div class="menu-section">
+        <h4>Uhr</h4>
+        <button data-act="toggle">Start / Pause <kbd>Leertaste</kbd></button>
+        <button data-act="next">Level vor <kbd>&rarr;</kbd></button>
+        <button data-act="prev">Level zurück <kbd>&larr;</kbd></button>
+        <button data-act="plus">+1 Minute <kbd>&uarr;</kbd></button>
+        <button data-act="minus">-1 Minute <kbd>&darr;</kbd></button>
+      </div>
+      <div class="menu-section">
+        <h4>Spieler</h4>
+        <button data-act="late">Nachzügler <kbd>N</kbd></button>
+        <button data-act="rebuy">Rebuy <kbd>R</kbd></button>
+        <button data-act="addon">Add-On <kbd>A</kbd></button>
+        <button data-act="out">Out <kbd>O</kbd></button>
+      </div>
+      <div class="menu-section">
+        <h4>Anzeige</h4>
+        <button data-act="info">Geld-Übersicht <kbd>I</kbd></button>
+        <button data-act="full">Vollbild <kbd>F</kbd></button>
+        <button data-act="mute">Ton an / aus <kbd>M</kbd></button>
+      </div>
+      <div class="menu-section">
+        <h4>Verwaltung</h4>
+        <button data-act="settings">Einstellungen <kbd>E</kbd></button>
+        <button data-act="cash">Zum Cash Game <kbd>G</kbd></button>
+      </div>
+      <div class="menu-section dim">
+        <h4>Test (nur Mockup)</h4>
+        <button data-act="demo">Demo-Tempo x60 <kbd>D</kbd></button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="clock-area">
+      <div class="phase" id="phase">Rebuy-Phase</div>
+      <div id="countdown">30:00</div>
+      <div class="progress"><div id="progress"></div></div>
+      <div class="blinds">
+        <div class="label">BLINDS</div>
+        <div class="value" id="blinds">5 / 10</div>
+        <div class="ante" id="ante">ANTE 10 (BB)</div>
+      </div>
+      <div class="next" id="next"></div>
+      <div class="break-info">
+        <div class="row"><span>Add-On</span><b id="breakAddon">-</b></div>
+        <div class="row" id="breakNoteRow"><span>Hinweis</span><b id="breakNote">-</b></div>
+        <div class="row"><span>Umschläge füllen</span><b id="breakEnv">-</b></div>
+      </div>
+    </section>
+
+    <aside id="pools">
+      <div class="card">
+        <div class="label">Preispool</div>
+        <div class="big" id="prize">0 &euro;</div>
+        <div class="payout" id="payout"></div>
+      </div>
+      <div class="card mystery">
+        <div class="label">Mystery-Pool</div>
+        <div class="big" id="mystery">0 &euro;</div>
+        <div class="env-label" id="envLabel">UMSCHLÄGE</div>
+        <div class="envelopes" id="envelopes"></div>
+        <div class="small" id="envText"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="stat"><div class="label">Spieler</div><div class="value" id="sPlayers"></div></div>
+    <div class="stat"><div class="label">Ø Stack</div><div class="value" id="sAvg"></div></div>
+    <div class="stat"><div class="label">Rebuys</div><div class="value" id="sRebuys"></div></div>
+    <div class="stat"><div class="label">Add-Ons</div><div class="value" id="sAddons"></div></div>
+    <div class="stat"><div class="label" id="sNextLabel"></div><div class="value" id="sNext"></div></div>
+  </footer>
+
+  <div class="badge" id="demoBadge">DEMO x60</div>
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-bg" id="modalBg">
+    <div class="modal" id="modal"></div>
+  </div>
+
+<script>
+// Mockup: Werte entsprechen der Vorlage "Rebuy Mystery Bounty" aus dem Konzept.
+let STRUCTURE = [
+  { sb: 5, bb: 10, ante: 10, min: 30 },
+  { sb: 10, bb: 20, ante: 20, min: 30 },
+  { sb: 20, bb: 40, ante: 40, min: 30 },
+  { sb: 25, bb: 50, ante: 50, min: 30 },
+  { brk: true, min: 10, note: "5er und 10er raus" },
+  { sb: 25, bb: 50, ante: 50, min: 30 },
+  { sb: 50, bb: 100, ante: 100, min: 30 },
+  { sb: 100, bb: 200, ante: 200, min: 30 },
+  { sb: 200, bb: 400, ante: 400, min: 15, note: "Color-Up: 25er und 50er raus" },
+  { sb: 400, bb: 800, ante: 800, min: 15 },
+  { sb: 800, bb: 1600, ante: 1600, min: 15 },
+  { sb: 1500, bb: 3000, ante: 3000, min: 15 },
+  { sb: 2000, bb: 4000, ante: 4000, min: 15 },
+];
+let cfg = {
+  buyPrize: 15, buyMystery: 5, buyChips: 2000,
+  addonPrice: 5, addonChips: 1500,
+  payout: [60, 30, 10], rounding: 5,
+  rebuyUntil: 4, lateUntil: 4,
+};
+
+function renumber(list) { let n = 0; list.forEach(s => { if (!s.brk) s.level = ++n; }); }
+renumber(STRUCTURE);
+
+const MIN_PLAYERS = 6, MAX_PLAYERS = 10;
+let players = [];
+
+const st = { idx: 0, remaining: STRUCTURE[0].min * 60000, running: false, startTs: 0, startRemaining: 0, speed: 1, sound: true, envTotal: null, envDrawn: 0 };
+
+const $ = id => document.getElementById(id);
+const fmtNum = n => Number(n).toLocaleString("de-DE");
+const fmtTime = ms => {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+};
+const fmtClock = d => d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+const alive = () => players.filter(p => !p.out);
+const entries = () => players.length + players.reduce((a, p) => a + p.rebuys, 0);
+const addons = () => players.filter(p => p.addon).length;
+const prizePool = () => entries() * cfg.buyPrize + addons() * cfg.addonPrice;
+const mysteryPool = () => entries() * cfg.buyMystery;
+const chipsInPlay = () => entries() * cfg.buyChips + addons() * cfg.addonChips;
+const cur = () => STRUCTURE[st.idx];
+const breakIdx = () => STRUCTURE.findIndex(s => s.brk);
+// Bounty startet nach der ersten Pause, ohne Pause nach dem letzten Rebuy-Level
+function bountyStartIdx() {
+  const b = breakIdx();
+  if (b >= 0) return b + 1;
+  const i = STRUCTURE.findIndex(s => !s.brk && s.level > cfg.rebuyUntil);
+  return i < 0 ? STRUCTURE.length : i;
+}
+const isRebuy = i => { const s = STRUCTURE[i]; const b = breakIdx(); return !s.brk && s.level <= cfg.rebuyUntil && (b < 0 || i < b); };
+const isLate = i => { const s = STRUCTURE[i]; const b = breakIdx(); return !s.brk && s.level <= cfg.lateUntil && (b < 0 || i < b); };
+const bountyActive = () => st.idx >= bountyStartIdx();
+
+function payouts() {
+  const pool = prizePool();
+  const r = cfg.rounding;
+  const raw = cfg.payout.map(p => Math.floor(pool * p / 100 / r) * r);
+  raw[0] += pool - raw.reduce((a, b) => a + b, 0);
+  return raw;
+}
+
+function currentRemaining() {
+  if (!st.running) return st.remaining;
+  return st.startRemaining - (Date.now() - st.startTs) * st.speed;
+}
+function setRunning(on) {
+  if (on === st.running) return;
+  if (on) { st.startTs = Date.now(); st.startRemaining = st.remaining; }
+  else { st.remaining = currentRemaining(); }
+  st.running = on;
+}
+function withPaused(fn) { const was = st.running; setRunning(false); fn(); setRunning(was); }
+
+function goTo(idx, announce) {
+  withPaused(() => {
+    st.idx = Math.max(0, Math.min(STRUCTURE.length - 1, idx));
+    st.remaining = cur().min * 60000;
+    if (bountyActive() && st.envTotal === null) st.envTotal = Math.max(0, alive().length - 1);
+  });
+  if (announce) {
+    beep(880, 0.25); setTimeout(() => beep(1175, 0.35), 280);
+    const s = cur();
+    if (s.brk) toast("Pause: Rebuy-Phase beendet, Add-On jetzt möglich");
+    else if (s.note) toast(s.note);
+    else toast("Level " + s.level + ": " + fmtNum(s.sb) + " / " + fmtNum(s.bb));
+  }
+  render();
+}
+
+// Prognose: erstes Level, in dem nur noch ca. 25 Big Blinds im Spiel sind
+function forecastEnd() {
+  const chips = chipsInPlay();
+  let ms = currentRemaining();
+  for (let i = st.idx; i < STRUCTURE.length; i++) {
+    const s = STRUCTURE[i];
+    if (i > st.idx) ms += s.min * 60000;
+    if (!s.brk && chips / s.bb <= 25) break;
+  }
+  return new Date(Date.now() + ms / st.speed);
+}
+
+function render() {
+  const s = cur();
+  const rem = currentRemaining();
+  document.body.classList.toggle("on-break", !!s.brk);
+  $("levelTag").innerHTML = s.brk ? "<span>PAUSE</span>" : "LEVEL <span>" + s.level + "</span>";
+  $("phase").textContent = s.brk ? "Pause" : isRebuy(st.idx) ? "Rebuy-Phase" : bountyActive() ? "Mystery Bounty aktiv" : "Kein Rebuy mehr";
+  $("phase").className = "phase" + (isRebuy(st.idx) ? " rebuy" : "");
+  $("countdown").textContent = fmtTime(rem);
+  $("countdown").classList.toggle("warn", rem <= 60000 && rem > 0);
+  $("countdown").classList.toggle("paused", !st.running);
+  $("progress").style.width = Math.max(0, 100 - rem / (s.min * 600)) + "%";
+
+  if (!s.brk) {
+    $("blinds").textContent = fmtNum(s.sb) + " / " + fmtNum(s.bb);
+    $("ante").textContent = s.ante ? "ANTE " + fmtNum(s.ante) + " (BB)" : "";
+    const n = STRUCTURE[st.idx + 1];
+    $("next").innerHTML = !n ? "Letztes Level"
+      : n.brk ? "Danach: <b>Pause " + n.min + " Min</b>"
+      : "Nächstes Level: <b>" + fmtNum(n.sb) + " / " + fmtNum(n.bb) + "</b>" + (n.ante ? " &middot; Ante " + fmtNum(n.ante) : "") + (n.min !== s.min ? " &middot; " + n.min + " Min" : "");
+  } else {
+    $("breakAddon").textContent = cfg.addonPrice + " € = " + fmtNum(cfg.addonChips) + " Chips";
+    $("breakNoteRow").style.display = s.note ? "" : "none";
+    $("breakNote").textContent = s.note || "";
+    $("breakEnv").textContent = mysteryPool() + " € auf " + Math.max(0, alive().length - 1) + " Umschläge";
+  }
+
+  $("prize").textContent = fmtNum(prizePool()) + " €";
+  const p = payouts();
+  $("payout").innerHTML = p.map((v, i) => "<span>" + (i + 1) + ". Platz</span><span>" + fmtNum(v) + " €</span>").join("");
+
+  $("mystery").textContent = fmtNum(mysteryPool()) + " €";
+  const fixed = st.envTotal !== null;
+  const total = fixed ? st.envTotal : Math.max(0, alive().length - 1);
+  $("envelopes").innerHTML = Array.from({ length: total }, (_, i) =>
+    '<div class="env' + (fixed ? (i < st.envDrawn ? " drawn" : "") : " pending") + '"></div>').join("");
+  $("envLabel").textContent = fixed ? "UMSCHLÄGE " + (st.envTotal - st.envDrawn) + " / " + st.envTotal : "UMSCHLÄGE (voraussichtlich " + total + ")";
+  $("envText").textContent = fixed
+    ? (st.envTotal - st.envDrawn ? "Wer rauswirft, zieht einen Umschlag" : "Alle Umschläge gezogen")
+    : "Werden in der Pause gefüllt, gelten ab Level " + (STRUCTURE[bountyStartIdx()] ? STRUCTURE[bountyStartIdx()].level : "-");
+
+  const a = alive().length;
+  $("sPlayers").innerHTML = a + " <small>/ " + players.length + "</small>";
+  const avg = Math.round(chipsInPlay() / Math.max(1, a));
+  const bbRef = s.brk ? (STRUCTURE[st.idx + 1] || STRUCTURE[st.idx - 1]).bb : s.bb;
+  $("sAvg").innerHTML = fmtNum(avg) + " <small>" + Math.round(avg / bbRef) + " BB</small>";
+  $("sRebuys").textContent = entries() - players.length;
+  $("sAddons").textContent = addons();
+
+  const b = breakIdx();
+  if (b >= 0 && st.idx < b) {
+    let ms = rem;
+    for (let i = st.idx + 1; i < b; i++) ms += STRUCTURE[i].min * 60000;
+    const m = Math.ceil(ms / 60000);
+    $("sNextLabel").textContent = "Pause in";
+    $("sNext").innerHTML = Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0") + " <small>h</small>";
+  } else {
+    $("sNextLabel").textContent = "Ende ca.";
+    $("sNext").innerHTML = fmtClock(forecastEnd()) + " <small>Uhr</small>";
+  }
+  $("walltime").textContent = fmtClock(new Date());
+}
+
+function tick() {
+  if (st.running && currentRemaining() <= 0) {
+    if (st.idx < STRUCTURE.length - 1) goTo(st.idx + 1, true);
+    else { setRunning(false); st.remaining = 0; }
+  }
+  const rem = currentRemaining();
+  if (st.running && !st.warned && rem <= 60000 && rem > 0) { st.warned = true; beep(660, 0.2); }
+  if (rem > 60000) st.warned = false;
+  render();
+  if (settingsOpen) refreshSettingsLive();
+}
+
+// Ton
+let audio;
+function beep(freq, dur) {
+  if (!st.sound) return;
+  audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.25, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + dur);
+  o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + dur);
+}
+
+let toastTimer;
+function toast(text) {
+  $("toast").textContent = text; $("toast").classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $("toast").classList.remove("show"), 3500);
+}
+
+// Dialoge
+let modalOpen = false, settingsOpen = false, modalLocked = false;
+function openModal(cls, html) {
+  modalOpen = true;
+  $("modal").className = "modal " + cls;
+  $("modal").innerHTML = html;
+  $("modalBg").classList.add("show");
+}
+// Schließen-Buttons in allen Dialogen
+document.getElementById("modal").addEventListener("click", e => { if (e.target.closest("[data-close]")) closeModal(); });
+function closeModal() { if (modalLocked) return; modalOpen = false; settingsOpen = false; $("modalBg").classList.remove("show"); }
+
+// ---------- Check-in: wer spielt heute? ----------
+// Stammliste bleibt im Browser gespeichert (in der echten App in spieler.json)
+function loadRoster() { try { return JSON.parse(localStorage.getItem("pf.roster")) || []; } catch { return []; } }
+function saveRoster() { try { localStorage.setItem("pf.roster", JSON.stringify(roster)); } catch {} }
+let roster = loadRoster();
+const selected = new Set();
+
+function openCheckin() {
+  modalLocked = false;
+  openModal("checkin", "");
+  modalLocked = true;
+  drawCheckin();
+}
+function drawCheckin() {
+  const n = selected.size;
+  const chips = roster.length
+    ? roster.map((name, i) => "<button class='chip" + (selected.has(name) ? " on" : "") + "' data-i='" + i + "'>" + escapeHtml(name) + "<span class='x' data-del='" + i + "' title='Aus Stammliste löschen'>&times;</span></button>").join("")
+    : "<span class='empty'>Noch keine Spieler in der Stammliste. Namen unten eintragen.</span>";
+  $("modal").innerHTML =
+    "<h2>&spades; Wer spielt heute?</h2><p>Spieler antippen, die heute dabei sind. Mindestens " + MIN_PLAYERS + ", maximal " + MAX_PLAYERS + ". Buy-in " + (cfg.buyPrize + cfg.buyMystery) + " € pro Spieler.</p>" +
+    "<div class='chips'>" + chips + "</div>" +
+    "<div class='add-row'><input id='newName' placeholder='Neuer Spieler, Enter zum Hinzufügen' maxlength='20'><button class='btn' id='addName'>Hinzufügen</button>" +
+    (roster.length ? "" : "<button class='btn' id='demoNames'>Demo-Namen</button>") + "</div>" +
+    "<div class='checkin-foot'><span>Heute dabei: <b>" + n + "</b> / " + MAX_PLAYERS +
+    (n < MIN_PLAYERS ? " &middot; noch " + (MIN_PLAYERS - n) + " fehlen" : "") + "</span>" +
+    "<button class='btn primary' id='startBtn'" + (n < MIN_PLAYERS ? " disabled" : "") + ">Turnier starten</button></div>";
+
+  const m = $("modal");
+  m.querySelectorAll(".chip").forEach(c => c.onclick = e => {
+    const name = roster[+c.dataset.i];
+    if (e.target.dataset.del !== undefined) { roster.splice(+e.target.dataset.del, 1); selected.delete(name); saveRoster(); return drawCheckin(); }
+    if (selected.has(name)) selected.delete(name);
+    else if (selected.size >= MAX_PLAYERS) return toast("Maximal " + MAX_PLAYERS + " Spieler");
+    else selected.add(name);
+    drawCheckin();
+  });
+  const add = () => {
+    const name = $("newName").value.trim();
+    if (!name) return;
+    if (!roster.includes(name)) { roster.push(name); saveRoster(); }
+    if (selected.size < MAX_PLAYERS) selected.add(name); else toast("Maximal " + MAX_PLAYERS + " Spieler");
+    drawCheckin(); $("newName").focus();
+  };
+  $("addName").onclick = add;
+  $("newName").onkeydown = e => { if (e.key === "Enter") add(); };
+  if ($("demoNames")) $("demoNames").onclick = () => {
+    roster = ["Max", "Anna", "Tom", "Lisa", "Ben", "Julia", "Paul", "Sarah"]; saveRoster();
+    roster.forEach(n => selected.add(n)); drawCheckin();
+  };
+  $("startBtn").onclick = () => {
+    players = roster.filter(n => selected.has(n)).map(name => ({ name, out: false, rebuys: 0, addon: false, ko: 0, place: null }));
+    modalLocked = false; closeModal();
+    toast(players.length + " Spieler eingecheckt. Leertaste startet die Uhr");
+    render();
+  };
+  if (roster.length) $("newName").blur(); else $("newName").focus();
+}
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+function pickPlayer(title, hint, list, onPick) {
+  openModal("", "<h2>" + title + "</h2><p>" + hint + "</p><div class='pick'>" +
+    list.map((p, i) => "<button data-i='" + i + "'>" + p.name + "<small>" + info(p) + "</small></button>").join("") +
+    "</div><div class='modal-foot'><button class='btn' data-close>Schließen</button></div>");
+  $("modal").querySelectorAll(".pick button").forEach(b => b.onclick = () => { closeModal(); onPick(list[+b.dataset.i]); });
+  const first = $("modal").querySelector(".pick button"); if (first) first.focus();
+}
+function info(p) {
+  const parts = [];
+  if (p.rebuys) parts.push(p.rebuys + "x Rebuy");
+  if (p.addon) parts.push("Add-On");
+  if (p.ko) parts.push(p.ko + " KO");
+  return parts.join(", ") || "&nbsp;";
+}
+
+function doRebuy() {
+  if (!isRebuy(st.idx)) return toast("Rebuy nur bis Level " + cfg.rebuyUntil);
+  pickPlayer("Rebuy", "Spieler mit 0 Chips kauft für " + (cfg.buyPrize + cfg.buyMystery) + " € neu ein (" + fmtNum(cfg.buyChips) + " Chips, " + cfg.buyMystery + " € in den Mystery-Pool)", alive(), p => {
+    p.rebuys++; toast(p.name + ": Rebuy"); render();
+  });
+}
+// Nachzügler: gleicher Buy-in, voller Startstack, bis Level cfg.lateUntil
+function doLate() {
+  if (!isLate(st.idx)) return toast("Nachmelden nur bis Level " + cfg.lateUntil);
+  if (players.length >= MAX_PLAYERS) return toast("Tisch voll, maximal " + MAX_PLAYERS + " Spieler");
+  const free = roster.filter(n => !players.some(p => p.name === n));
+  const join = name => {
+    players.push({ name, out: false, rebuys: 0, addon: false, ko: 0, place: null });
+    closeModal();
+    toast(name + " ist dabei: " + (cfg.buyPrize + cfg.buyMystery) + " €, " + fmtNum(cfg.buyChips) + " Chips");
+    render();
+  };
+  openModal("checkin",
+    "<h2>Nachzügler einchecken</h2><p>Buy-in " + (cfg.buyPrize + cfg.buyMystery) + " € für " + fmtNum(cfg.buyChips) + " Chips. Noch " + (MAX_PLAYERS - players.length) + " Plätze frei, möglich bis Level " + cfg.lateUntil + ".</p>" +
+    "<div class='chips'>" + (free.length ? free.map((n, i) => "<button class='chip' data-i='" + i + "'>" + escapeHtml(n) + "</button>").join("") : "<span class='empty'>Alle aus der Stammliste spielen schon mit.</span>") + "</div>" +
+    "<div class='add-row'><input id='lateName' placeholder='Neuer Spieler, Enter zum Hinzufügen' maxlength='20'><button class='btn' id='lateAdd'>Einchecken</button></div>" +
+    "<div class='modal-foot'><button class='btn' data-close>Schließen</button></div>");
+  $("modal").querySelectorAll(".chip").forEach(c => c.onclick = () => join(free[+c.dataset.i]));
+  const add = () => {
+    const name = $("lateName").value.trim();
+    if (!name) return;
+    if (players.some(p => p.name === name)) return toast(name + " spielt schon mit");
+    if (!roster.includes(name)) { roster.push(name); saveRoster(); }
+    join(name);
+  };
+  $("lateAdd").onclick = add;
+  $("lateName").onkeydown = e => { if (e.key === "Enter") add(); };
+  if (!free.length) $("lateName").focus();
+}
+
+function doAddon() {
+  if (!cur().brk) return toast("Add-On nur in der Pause");
+  const list = alive().filter(p => !p.addon);
+  if (!list.length) return toast("Alle haben schon ein Add-On");
+  pickPlayer("Add-On", cfg.addonPrice + " € für " + fmtNum(cfg.addonChips) + " Chips, einmal pro Spieler", list, p => {
+    p.addon = true; toast(p.name + ": Add-On"); render();
+  });
+}
+function doOut() {
+  if (alive().length < 2) return;
+  pickPlayer("Out", "Wer ist ausgeschieden?", alive(), out => {
+    const others = alive().filter(p => p !== out);
+    pickPlayer("Rausgeworfen von", out.name + " ist raus. Wer hat den Spieler rausgeworfen?", others, by => {
+      out.place = alive().length; out.out = true; by.ko++;
+      if (bountyActive() && st.envTotal !== null && st.envDrawn < st.envTotal) {
+        st.envDrawn++; toast(by.name + " zieht einen Umschlag!"); beep(1320, 0.4);
+      } else {
+        toast(out.name + " ist raus (Platz " + out.place + ")");
+      }
+      if (alive().length === 1) { alive()[0].place = 1; showWinner(); }
+      render();
+    });
+  });
+}
+function showWinner() {
+  setRunning(false);
+  const p = payouts();
+  const ranked = players.filter(x => x.place && x.place <= p.length).sort((a, b) => a.place - b.place);
+  openModal("winner", "<h2>&spades; " + ranked[0].name + " gewinnt!</h2><table>" +
+    ranked.map(x => "<tr><td>" + x.place + ". Platz</td><td>" + x.name + "</td><td>" + fmtNum(p[x.place - 1]) + " €</td></tr>").join("") +
+    "</table><div class='modal-foot'><button class='btn' data-close>Schließen</button></div>");
+}
+
+// ---------- Einstellungen ----------
+let draft, draftCfg, tab = "struct";
+function openSettings() {
+  draft = STRUCTURE.map(s => ({ ...s }));
+  draftCfg = JSON.parse(JSON.stringify(cfg));
+  settingsOpen = true;
+  openModal("settings", "");
+  drawSettings();
+}
+function drawSettings() {
+  const tabs = "<div class='tabs'><button data-tab='struct' class='" + (tab === "struct" ? "active" : "") + "'>Blindstruktur</button>" +
+    "<button data-tab='money' class='" + (tab === "money" ? "active" : "") + "'>Geld &amp; Chips</button></div>";
+  const head = "<div class='set-head'><h2>Einstellungen</h2><div class='live' id='setLive'></div></div>";
+  const body = "<div class='set-body'>" + (tab === "struct" ? structHtml() : moneyHtml()) + "</div>";
+  const sum = draftCfg.payout.reduce((a, b) => a + (+b || 0), 0);
+  const foot = "<div class='set-foot'>" +
+    (tab === "struct" ? "<button class='btn' data-add='level'>+ Level am Ende</button><button class='btn' data-add='break'>+ Pause am Ende</button>" : "") +
+    "<span class='spacer'></span>" +
+    (sum !== 100 ? "<span class='warn-text'>Auszahlung ergibt " + sum + " % statt 100 %</span>" : "") +
+    "<button class='btn' data-act='template'>Als Vorlage speichern</button>" +
+    "<button class='btn' data-act='cancel'>Abbrechen</button>" +
+    "<button class='btn primary' data-act='apply'" + (sum !== 100 ? " disabled" : "") + ">Übernehmen</button></div>";
+  $("modal").innerHTML = head + tabs + body + foot;
+  bindSettings();
+  refreshSettingsLive();
+}
+function structHtml() {
+  renumber(draft);
+  let rows = "";
+  draft.forEach((s, i) => {
+    const locked = i < st.idx;
+    const cls = (s.brk ? "brk " : "") + (i === st.idx ? "current " : "") + (locked ? "past" : "");
+    const dis = locked ? " disabled" : "";
+    const tag = i === st.idx ? "<span class='tag'>LÄUFT</span>" : (!s.brk && s.level <= draftCfg.rebuyUntil && (draft.findIndex(x => x.brk) < 0 || i < draft.findIndex(x => x.brk))) ? "<span class='tag'>REBUY</span>" : "";
+    const num = (f) => "<input type='number' min='0' data-i='" + i + "' data-f='" + f + "' value='" + s[f] + "'" + dis + ">";
+    rows += "<tr class='" + cls + "'><td class='name'>" + (s.brk ? "Pause" : "Level " + s.level) + tag + "</td>" +
+      (s.brk ? "<td></td><td></td><td></td>" : "<td>" + num("sb") + "</td><td>" + num("bb") + "</td><td>" + num("ante") + "</td>") +
+      "<td>" + num("min") + "</td>" +
+      "<td><input class='note' data-i='" + i + "' data-f='note' value='" + (s.note || "") + "' placeholder='z.B. Color-Up'" + dis + "></td>" +
+      "<td style='white-space:nowrap'>" + (locked ? "" :
+        "<button class='rowbtn' data-ins='level' data-i='" + i + "' title='Level danach einfügen'>+ Level</button>" +
+        "<button class='rowbtn' data-ins='break' data-i='" + i + "' title='Pause danach einfügen'>+ Pause</button>" +
+        (i === st.idx ? "" : "<button class='rowbtn' data-del='" + i + "' title='Löschen'>&times;</button>")) + "</td></tr>";
+  });
+  return "<table class='struct'><tr><th></th><th>Small Blind</th><th>Big Blind</th><th>Ante (BB)</th><th>Minuten</th><th>Hinweis (wird angesagt)</th><th></th></tr>" + rows + "</table>" +
+    "<p class='hint'>Vergangene Levels sind gesperrt. Änderungen am laufenden Level wirken sofort, die Uhr läuft im Hintergrund weiter.</p>";
+}
+function moneyHtml() {
+  const c = draftCfg;
+  const f = (label, key, unit, idx) => "<div class='field'><span>" + label + "</span><span><input type='number' min='0' data-cfg='" + key + "'" + (idx !== undefined ? " data-idx='" + idx + "'" : "") + " value='" + (idx !== undefined ? c[key][idx] : c[key]) + "'> " + unit + "</span></div>";
+  return "<div class='form'>" +
+    "<div class='group'><h3>Buy-in und Rebuy</h3>" + f("Anteil Preispool", "buyPrize", "€") + f("Anteil Mystery-Pool", "buyMystery", "€") + f("Startchips", "buyChips", "Chips") +
+      "<div class='field'><span>Rebuy möglich bis</span><span>Level <input type='number' min='0' data-cfg='rebuyUntil' value='" + c.rebuyUntil + "'></span></div>" +
+      "<div class='field'><span>Nachmeldung möglich bis</span><span>Level <input type='number' min='0' data-cfg='lateUntil' value='" + c.lateUntil + "'></span></div>" +
+      "<p class='hint'>Buy-in gesamt: " + ((+c.buyPrize || 0) + (+c.buyMystery || 0)) + " €. Rebuy kostet gleich viel und gibt gleich viele Chips, nur bei 0 Chips.</p></div>" +
+    "<div class='group'><h3>Add-On</h3>" + f("Preis", "addonPrice", "€") + f("Chips", "addonChips", "Chips") +
+      "<p class='hint'>Nur in der Pause, einmal pro Spieler, geht komplett in den Preispool.</p></div>" +
+    "<div class='group'><h3>Auszahlung</h3>" + f("1. Platz", "payout", "%", 0) + f("2. Platz", "payout", "%", 1) + f("3. Platz", "payout", "%", 2) +
+      "<div class='field'><span>Rundung</span><span><select data-cfg='rounding'><option value='1'" + (c.rounding == 1 ? " selected" : "") + ">auf 1 €</option><option value='5'" + (c.rounding == 5 ? " selected" : "") + ">auf 5 €</option></select></span></div>" +
+      "<p class='hint'>Rest durch Rundung geht an Platz 1.</p></div>" +
+    "<div class='group'><h3>Mystery Bounty</h3><p class='hint'>Kopfgeld gilt ab dem ersten Level nach der Pause. Anzahl Umschläge = Spieler zu diesem Zeitpunkt minus 1.</p></div>" +
+    "</div>";
+}
+function bindSettings() {
+  const m = $("modal");
+  m.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { tab = b.dataset.tab; drawSettings(); });
+  m.querySelectorAll("input[data-f]").forEach(inp => inp.onchange = () => {
+    const s = draft[+inp.dataset.i], f = inp.dataset.f;
+    if (f === "note") { s.note = inp.value.trim() || undefined; return; }
+    const v = Math.max(0, Math.round(+inp.value || 0));
+    if (f === "bb" && s.ante === s.bb) s.ante = v; // Ante folgt dem BB, solange sie gleich waren
+    if (f === "bb" && s.sb === s.bb / 2) s.sb = Math.round(v / 2);
+    s[f] = f === "min" ? Math.max(1, v) : v;
+    drawSettings();
+  });
+  m.querySelectorAll("[data-cfg]").forEach(inp => inp.onchange = () => {
+    const k = inp.dataset.cfg, v = +inp.value || 0;
+    if (inp.dataset.idx !== undefined) draftCfg[k][+inp.dataset.idx] = v; else draftCfg[k] = v;
+    drawSettings();
+  });
+  m.querySelectorAll("[data-ins]").forEach(b => b.onclick = () => insertRow(+b.dataset.i + 1, b.dataset.ins));
+  m.querySelectorAll("[data-add]").forEach(b => b.onclick = () => insertRow(draft.length, b.dataset.add));
+  m.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { draft.splice(+b.dataset.del, 1); drawSettings(); });
+  m.querySelector("[data-act=cancel]").onclick = closeModal;
+  m.querySelector("[data-act=template]").onclick = () => toast("Vorlagen speichern kommt in der echten App");
+  m.querySelector("[data-act=apply]").onclick = applySettings;
+}
+function insertRow(at, kind) {
+  if (kind === "break") draft.splice(at, 0, { brk: true, min: 10 });
+  else {
+    const prev = draft.slice(0, at).reverse().find(s => !s.brk) || { bb: 10, min: 30 };
+    const bb = prev.bb * 2;
+    draft.splice(at, 0, { sb: bb / 2, bb, ante: bb, min: prev.min });
+  }
+  drawSettings();
+}
+function refreshSettingsLive() {
+  const el = $("setLive"); if (!el) return;
+  const s = cur();
+  el.innerHTML = "Uhr läuft weiter: <b>" + (s.brk ? "Pause" : "Level " + s.level) + " &middot; " + fmtTime(currentRemaining()) + "</b>";
+}
+function applySettings() {
+  const oldMin = cur().min;
+  STRUCTURE = draft; cfg = draftCfg; renumber(STRUCTURE);
+  withPaused(() => {
+    const diff = (cur().min - oldMin) * 60000;
+    st.remaining = Math.max(1000, Math.min(cur().min * 60000, st.remaining + diff));
+  });
+  closeModal(); toast("Einstellungen übernommen"); render();
+}
+
+// ---------- Bedienung ----------
+const actions = {
+  toggle: () => { setRunning(!st.running); if (audio) audio.resume(); else beep(1, .01); },
+  next: () => goTo(st.idx + 1, true),
+  prev: () => goTo(st.idx - 1, false),
+  plus: () => withPaused(() => { st.remaining = Math.min(cur().min * 60000, st.remaining + 60000); }),
+  minus: () => withPaused(() => { st.remaining = Math.max(1000, st.remaining - 60000); }),
+  rebuy: doRebuy, addon: doAddon, out: doOut, late: doLate,
+  settings: openSettings,
+  cash: () => { location.href = "kasse.html"; },
+  menu: () => { const on = $("menubar").classList.toggle("show"); $("menuBtn").classList.toggle("active", on); },
+  info: () => { const on = $("pools").classList.toggle("show"); $("infoBtn").classList.toggle("active", on); },
+  full: () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(),
+  mute: () => { st.sound = !st.sound; toast("Ton " + (st.sound ? "an" : "aus")); },
+  demo: () => { withPaused(() => { st.speed = st.speed === 1 ? 60 : 1; }); $("demoBadge").classList.toggle("show", st.speed !== 1); },
+};
+const keys = { " ": "toggle", ArrowRight: "next", ArrowLeft: "prev", ArrowUp: "plus", ArrowDown: "minus", r: "rebuy", a: "addon", o: "out", n: "late", i: "info", g: "cash", e: "settings", f: "full", m: "mute", d: "demo" };
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") return closeModal();
+  if (modalOpen) return;
+  const act = keys[e.key] || keys[e.key.toLowerCase()];
+  if (!act) return;
+  e.preventDefault();
+  actions[act]();
+  render();
+});
+document.querySelectorAll("#menubar button").forEach(b => b.onclick = () => { actions[b.dataset.act](); render(); });
+$("infoBtn").onclick = () => { actions.info(); render(); };
+$("menuBtn").onclick = () => { actions.menu(); render(); };
+
+// Menü schließt bei Klick auf eine freie Fläche, solange kein Dialog offen ist
+document.addEventListener("click", e => {
+  if (!$("menubar").classList.contains("show") || modalOpen) return;
+  if (e.composedPath().some(el => el.id === "menubar" || el.id === "menuBtn" || el.id === "modalBg")) return;
+  actions.menu();
+});
+
+// Mauszeiger nach 3 Sekunden ohne Bewegung ausblenden
+let cursorTimer;
+document.addEventListener("mousemove", () => {
+  document.body.classList.remove("hide-cursor");
+  clearTimeout(cursorTimer);
+  cursorTimer = setTimeout(() => document.body.classList.add("hide-cursor"), 3000);
+});
+
+render();
+setInterval(tick, 200);
+openCheckin();
+</script>
+</body>
+</html>

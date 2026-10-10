@@ -1,0 +1,8 @@
+Sounds in Poker & Friends (Auswahl 2026-10-10)
+
+level-gong.mp3       Freesound #121800 "gong.WAV"            CC0  https://freesound.org/s/121800/
+jackpot-fanfare.mp3  Freesound #456966 "Success Fanfare Trumpets.mp3"  CC0  https://freesound.org/s/456966/
+envelope-coin.mp3    Freesound #17502 "Coin dropping.wav"    CC0  https://freesound.org/s/17502/
+start-shuffle.ogg    Kenney "Casino Audio" card-shuffle.ogg  CC0  https://kenney.nl  (Credit freiwillig)
+
+CC0 = gemeinfrei, frei nutzbar auch kommerziell, keine Namensnennung noetig.

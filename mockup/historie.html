@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Poker &amp; Friends Historie</title>
+<style>
+:root { --bg: #070708; --panel: #121215; --panel-2: #1a1a1f; --line: #2a2a31; --text: #f4f4f6; --muted: #8d8d97; --red: #d4142f; --red-soft: #ff3b55; --red-dark: #5c0a16; --plus: #3ecf7a; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+body { font-family: "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; user-select: none; }
+.view { position: fixed; inset: 0; display: grid; grid-template-rows: 9vh 1fr; background: radial-gradient(ellipse at 50% 30%, #1c0509 0%, var(--bg) 60%); }
+header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 3vw; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 800; letter-spacing: .12em; font-size: 2.4vh; }
+.brand span, .title span { color: var(--red); }
+.title { font-size: 3.4vh; font-weight: 800; letter-spacing: .2em; }
+.head-right { justify-self: end; display: flex; gap: 1vw; }
+.btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font: inherit; font-weight: 700; font-size: 1.9vh; padding: 1.1vh 1.4vw; border-radius: .9vh; cursor: pointer; }
+.btn:hover { border-color: var(--red); }
+.btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
+kbd { font-family: inherit; font-size: 1.5vh; color: var(--muted); border: 1px solid var(--line); border-radius: .5vh; padding: .1vh .6vh; margin-left: .6vw; }
+.btn.primary kbd { color: #ffd0d6; border-color: #ff8a9a; }
+
+main { padding: 3vh 4vw; overflow: hidden; display: flex; flex-direction: column; gap: 2.4vh; }
+.tabs { display: flex; gap: .8vw; }
+.tab { background: none; border: 1px solid var(--line); color: var(--muted); font: inherit; font-weight: 700; font-size: 2vh; padding: 1vh 1.6vw; border-radius: 99px; cursor: pointer; }
+.tab.on { background: var(--red); border-color: var(--red); color: #fff; }
+.tab .n { opacity: .7; font-weight: 500; margin-left: .4vw; }
+.pane { display: none; flex: 1; min-height: 0; }
+.pane.on { display: flex; gap: 2vw; }
+
+table { width: 100%; border-collapse: collapse; font-size: 2.2vh; }
+th { text-align: right; font-size: 1.5vh; letter-spacing: .14em; color: var(--muted); font-weight: 800; padding: 1vh 1vw; border-bottom: 1px solid var(--line); }
+td { text-align: right; padding: 1.3vh 1vw; border-bottom: 1px solid #1c1c22; }
+th:nth-child(-n+2), td:nth-child(-n+2) { text-align: left; }
+td.rank { color: var(--muted); width: 4vw; font-weight: 800; }
+tr.top1 td.rank { color: #f5c542; } tr.top2 td.rank { color: #c9ced6; } tr.top3 td.rank { color: #d08a4a; }
+td.name { font-weight: 800; }
+.plus { color: var(--plus); font-weight: 800; }
+.minus { color: var(--red-soft); font-weight: 800; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 1.4vh; padding: 2vh 1.6vw; overflow-y: auto; }
+.card h3 { font-size: 1.5vh; letter-spacing: .16em; color: var(--red-soft); margin-bottom: 1.4vh; }
+.grow { flex: 1; }
+.side { width: 26vw; display: flex; flex-direction: column; gap: 2vh; }
+.kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vh 1vw; }
+.kpi div small { display: block; color: var(--muted); font-size: 1.5vh; }
+.kpi div b { font-size: 3vh; }
+.hint { color: var(--muted); font-size: 1.6vh; line-height: 1.5; }
+
+.list { display: flex; flex-direction: column; gap: 1vh; width: 34vw; overflow-y: auto; }
+.night { background: var(--panel); border: 1px solid var(--line); border-radius: 1.2vh; padding: 1.6vh 1.2vw; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: .4vh 1vw; text-align: left; font: inherit; color: var(--text); }
+.night.on { border-color: var(--red); background: #1a0a0d; }
+.night .d { font-weight: 800; font-size: 2.1vh; }
+.night .t { font-size: 1.5vh; font-weight: 800; letter-spacing: .12em; color: var(--red-soft); align-self: center; }
+.night .s { grid-column: span 2; color: var(--muted); font-size: 1.7vh; }
+.detail { flex: 1; display: flex; flex-direction: column; gap: 2vh; min-width: 0; }
+.wa { background: #0b141a; border: 1px solid #1f2c33; border-radius: 1.2vh; padding: 2vh 1.6vw; font-size: 2vh; line-height: 1.55; white-space: pre-wrap; color: #e9edef; font-family: "Segoe UI", system-ui, sans-serif; }
+.wa b { font-weight: 800; }
+.row { display: flex; gap: 1vw; align-items: center; }
+.toast { position: fixed; left: 50%; bottom: 4vh; transform: translate(-50%, 200%); background: var(--panel-2); border: 1px solid var(--line); padding: 1.4vh 2vw; border-radius: 1vh; font-size: 2vh; transition: transform .25s; }
+.toast.on { transform: translate(-50%, 0); }
+
+/* Abschluss-Dialog */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.78); display: none; align-items: center; justify-content: center; z-index: 10; }
+.modal-bg.on { display: flex; }
+.modal { background: var(--panel); border: 1px solid var(--line); border-top: .6vh solid var(--red); border-radius: 1.4vh; padding: 3vh 2.4vw; width: 60vw; }
+.modal h2 { font-size: 3.4vh; margin-bottom: .6vh; }
+.modal p { color: var(--muted); font-size: 2vh; margin-bottom: 2vh; }
+.modal .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2vw; }
+.modal table { font-size: 2.1vh; }
+.foot { display: flex; justify-content: flex-end; gap: 1vw; margin-top: 2.4vh; }
+.foot .spacer { flex: 1; }
+.demo { position: fixed; right: 1vw; bottom: 1vh; font-size: 1.4vh; color: var(--muted); }
+.demo button { background: none; border: 0; color: var(--red-soft); font: inherit; text-decoration: underline; cursor: pointer; }
+</style>
+</head>
+<body>
+<section class="view">
+  <header>
+    <div class="brand"><span>&spades;</span> POKER <span>&amp;</span> FRIENDS</div>
+    <div class="title">HISTORIE</div>
+    <div class="head-right"><button class="btn">Zurück <kbd>Esc</kbd></button></div>
+  </header>
+  <main>
+    <div class="tabs">
+      <button class="tab on" data-p="rt">Rangliste Turnier</button>
+      <button class="tab" data-p="rc">Rangliste Cash Game</button>
+      <button class="tab" data-p="ab">Abende <span class="n">6</span></button>
+    </div>
+
+    <!-- Rangliste Turnier -->
+    <div class="pane on" id="rt">
+      <div class="card grow">
+        <table>
+          <tr><th>#</th><th>SPIELER</th><th>ABENDE</th><th>SIEGE</th><th>GELDRÄNGE</th><th>EINSATZ</th><th>AUSZAHLUNG</th><th>UMSCHLÄGE</th><th>BILANZ</th></tr>
+          <tr class="top1"><td class="rank">1</td><td class="name">Max</td><td>4</td><td>2</td><td>3</td><td>125 €</td><td>300 €</td><td>45 €</td><td class="plus">+220 €</td></tr>
+          <tr class="top2"><td class="rank">2</td><td class="name">Anna</td><td>4</td><td>1</td><td>2</td><td>105 €</td><td>175 €</td><td>60 €</td><td class="plus">+130 €</td></tr>
+          <tr class="top3"><td class="rank">3</td><td class="name">Tom</td><td>3</td><td>0</td><td>2</td><td>85 €</td><td>100 €</td><td>20 €</td><td class="plus">+35 €</td></tr>
+          <tr><td class="rank">4</td><td class="name">Lisa</td><td>4</td><td>1</td><td>1</td><td>100 €</td><td>90 €</td><td>10 €</td><td>±0 €</td></tr>
+          <tr><td class="rank">5</td><td class="name">Ben</td><td>4</td><td>0</td><td>0</td><td>125 €</td><td>0 €</td><td>40 €</td><td class="minus">-85 €</td></tr>
+          <tr><td class="rank">6</td><td class="name">Julia</td><td>3</td><td>0</td><td>1</td><td>105 €</td><td>25 €</td><td>0 €</td><td class="minus">-80 €</td></tr>
+          <tr><td class="rank">7</td><td class="name">Paul</td><td>4</td><td>0</td><td>0</td><td>145 €</td><td>0 €</td><td>15 €</td><td class="minus">-130 €</td></tr>
+        </table>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h3>TURNIERE GESAMT</h3>
+          <div class="kpi">
+            <div><small>Turniere</small><b>4</b></div>
+            <div><small>Ø Spieler</small><b>8,5</b></div>
+            <div><small>Ø Preispool</small><b>215 €</b></div>
+            <div><small>Ø Dauer</small><b>4:20 h</b></div>
+            <div><small>Meiste Siege</small><b>Max</b></div>
+            <div><small>Meiste KOs</small><b>Anna</b></div>
+          </div>
+        </div>
+        <div class="card hint">
+          <b style="color:var(--text)">So wird gerechnet</b><br>
+          Einsatz = Buy-ins + Rebuys + Add-Ons.<br>
+          Bilanz = Auszahlung + Umschläge − Einsatz.<br>
+          Umschläge zählen nur, wenn der Betrag beim Out eingetragen wurde.
+        </div>
+      </div>
+    </div>
+
+    <!-- Rangliste Cash -->
+    <div class="pane" id="rc">
+      <div class="card grow">
+        <table>
+          <tr><th>#</th><th>SPIELER</th><th>ABENDE</th><th>EINGEZAHLT</th><th>AUSGEZAHLT</th><th>BESTER ABEND</th><th>BILANZ</th></tr>
+          <tr class="top1"><td class="rank">1</td><td class="name">Anna</td><td>2</td><td>40 €</td><td>71,30 €</td><td>+24,10 €</td><td class="plus">+31,30 €</td></tr>
+          <tr class="top2"><td class="rank">2</td><td class="name">Max</td><td>2</td><td>30 €</td><td>42,40 €</td><td>+12,40 €</td><td class="plus">+12,40 €</td></tr>
+          <tr class="top3"><td class="rank">3</td><td class="name">Lisa</td><td>1</td><td>10 €</td><td>10,00 €</td><td>±0,00 €</td><td>±0,00 €</td></tr>
+          <tr><td class="rank">4</td><td class="name">Tom</td><td>2</td><td>40 €</td><td>21,30 €</td><td>-5,00 €</td><td class="minus">-18,70 €</td></tr>
+          <tr><td class="rank">5</td><td class="name">Ben</td><td>2</td><td>30 €</td><td>5,00 €</td><td>-10,00 €</td><td class="minus">-25,00 €</td></tr>
+        </table>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h3>CASH GAMES GESAMT</h3>
+          <div class="kpi">
+            <div><small>Abende</small><b>2</b></div>
+            <div><small>Ø Spielzeit</small><b>3:05 h</b></div>
+            <div><small>Umsatz</small><b>150 €</b></div>
+            <div><small>Ø Spieler</small><b>5</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Abende -->
+    <div class="pane" id="ab">
+      <div class="list" id="nights"></div>
+      <div class="detail">
+        <div class="card" id="nDetail"></div>
+        <div class="row"><b style="font-size:1.6vh;letter-spacing:.14em;color:var(--red-soft)">WHATSAPP-TEXT</b><span class="spacer" style="flex:1"></span><button class="btn primary" onclick="copy()">Kopieren <kbd>K</kbd></button></div>
+        <div class="wa" id="wa"></div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<div class="modal-bg" id="mbg">
+  <div class="modal">
+    <h2>&spades; Max gewinnt!</h2>
+    <p>Turnier abschließen speichert den Abend in der Historie. Den Text kannst du direkt in die WhatsApp-Gruppe einfügen.</p>
+    <div class="cols">
+      <table>
+        <tr><td>1. Platz</td><td class="name">Max</td><td>150 €</td></tr>
+        <tr><td>2. Platz</td><td class="name">Anna</td><td>75 €</td></tr>
+        <tr><td>3. Platz</td><td class="name">Tom</td><td>25 €</td></tr>
+        <tr><td colspan="3" style="text-align:left;color:var(--muted);font-size:1.8vh">Umschläge: Anna 2 (35 €), Ben 1 (20 €), Max 1 (15 €)</td></tr>
+      </table>
+      <div class="wa" id="wa2" style="font-size:1.7vh"></div>
+    </div>
+    <div class="foot"><button class="btn" onclick="copy()">Text kopieren</button><span class="spacer"></span><button class="btn" onclick="mbg.classList.remove('on')">Schließen</button><button class="btn primary" onclick="mbg.classList.remove('on')">Turnier abschließen</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Text kopiert, jetzt in WhatsApp einfügen</div>
+<div class="demo">Mockup: <button onclick="mbg.classList.add('on')">Sieger-Dialog mit WhatsApp-Text zeigen</button></div>
+
+<script>
+const nights = [
+  { d: "Sa 10.10.2026", t: "TURNIER", s: "9 Spieler · Sieger Max · Preispool 250 €", wa:
+`♠️ *Poker & Friends* · Turnier Sa 10.10.2026
+
+🏆 *Max* gewinnt!
+🥇 Max 150 €
+🥈 Anna 75 €
+🥉 Tom 25 €
+
+💌 Umschläge (70 €): Anna 2× (35 €), Ben 20 €, Max 15 €
+🔪 Meiste KOs: Anna (3)
+
+9 Spieler · 4 Rebuys · 8 Add-Ons
+20:05 bis 00:31 Uhr (4:26 h)`,
+    detail: `<h3>TURNIER · SA 10.10.2026 · 20:05 BIS 00:31</h3><table>
+<tr><th>PLATZ</th><th>SPIELER</th><th>EINSATZ</th><th>AUSZAHLUNG</th><th>UMSCHLÄGE</th><th>KOS</th><th>BILANZ</th></tr>
+<tr class="top1"><td class="rank">1</td><td class="name">Max</td><td>25 €</td><td>150 €</td><td>15 €</td><td>2</td><td class="plus">+140 €</td></tr>
+<tr class="top2"><td class="rank">2</td><td class="name">Anna</td><td>45 €</td><td>75 €</td><td>35 €</td><td>3</td><td class="plus">+65 €</td></tr>
+<tr class="top3"><td class="rank">3</td><td class="name">Tom</td><td>25 €</td><td>25 €</td><td>0 €</td><td>1</td><td>±0 €</td></tr>
+<tr><td class="rank">4</td><td class="name">Ben</td><td>45 €</td><td>0 €</td><td>20 €</td><td>1</td><td class="minus">-25 €</td></tr>
+<tr><td class="rank">5</td><td class="name">Lisa</td><td>25 €</td><td>0 €</td><td>0 €</td><td>0</td><td class="minus">-25 €</td></tr></table>` },
+  { d: "Fr 02.10.2026", t: "CASH GAME", s: "5 Spieler · Spielzeit 3:12 h · Umsatz 80 €", wa:
+`♠️ *Poker & Friends* · Cash Game Fr 02.10.2026
+
+💰 Ergebnis
+Anna +24,10 €
+Max +12,40 €
+Lisa ±0,00 €
+Tom -16,50 €
+Ben -20,00 €
+
+5 Spieler · 80 € im Spiel · 3:12 h`,
+    detail: `<h3>CASH GAME · FR 02.10.2026 · 3:12 H</h3><table>
+<tr><th>#</th><th>SPIELER</th><th>EINGEZAHLT</th><th>AUSGEZAHLT</th><th>BILANZ</th></tr>
+<tr class="top1"><td class="rank">1</td><td class="name">Anna</td><td>20 €</td><td>44,10 €</td><td class="plus">+24,10 €</td></tr>
+<tr class="top2"><td class="rank">2</td><td class="name">Max</td><td>10 €</td><td>22,40 €</td><td class="plus">+12,40 €</td></tr>
+<tr class="top3"><td class="rank">3</td><td class="name">Lisa</td><td>10 €</td><td>10,00 €</td><td>±0,00 €</td></tr>
+<tr><td class="rank">4</td><td class="name">Tom</td><td>20 €</td><td>3,50 €</td><td class="minus">-16,50 €</td></tr>
+<tr><td class="rank">5</td><td class="name">Ben</td><td>20 €</td><td>0,00 €</td><td class="minus">-20,00 €</td></tr></table>
+<p class="hint" style="margin-top:1.4vh">Kassen-Check: eingezahlt 80,00 € = ausgezahlt 80,00 € ✓</p>` },
+  { d: "Sa 26.09.2026", t: "TURNIER", s: "8 Spieler · Siegerin Anna · Preispool 205 €" },
+  { d: "Sa 12.09.2026", t: "TURNIER", s: "9 Spieler · Sieger Max · Preispool 230 €" },
+  { d: "Fr 04.09.2026", t: "CASH GAME", s: "5 Spieler · Spielzeit 2:58 h · Umsatz 70 €" },
+  { d: "Sa 29.08.2026", t: "TURNIER", s: "8 Spieler · Siegerin Lisa · Preispool 175 €" },
+];
+const $ = id => document.getElementById(id);
+const fmt = t => t.replace(/\*(.+?)\*/g, "<b>$1</b>");
+let cur = 0;
+function pickNight(i) {
+  cur = i;
+  const n = nights[i];
+  $("nights").querySelectorAll(".night").forEach((b, j) => b.classList.toggle("on", i === j));
+  $("nDetail").innerHTML = n.detail || "<h3>" + n.t + " · " + n.d.toUpperCase() + "</h3><p class='hint'>(Im Mockup nur für die ersten beiden Abende ausgefüllt)</p>";
+  $("wa").innerHTML = fmt(n.wa || nights[0].wa);
+}
+$("nights").innerHTML = nights.map((n, i) => `<button class="night" onclick="pickNight(${i})"><span class="d">${n.d}</span><span class="t">${n.t}</span><span class="s">${n.s}</span></button>`).join("");
+$("wa2").innerHTML = fmt(nights[0].wa);
+pickNight(0);
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === t.dataset.p));
+});
+function copy() {
+  navigator.clipboard && navigator.clipboard.writeText(nights[cur].wa || nights[0].wa).catch(() => {});
+  $("toast").classList.add("on");
+  setTimeout(() => $("toast").classList.remove("on"), 2500);
+}
+</script>
+</body>
+</html>

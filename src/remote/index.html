@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070708">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Poker &amp; Friends</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="remote.css">
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><span>&spades;</span> POKER <span>&amp;</span> FRIENDS</div>
+    <div class="conn off" id="conn"><i></i><span id="connText">Verbinde…</span></div>
+  </div>
+  <div class="seg">
+    <button id="segT" data-mode="t">Turnier</button>
+    <button id="segC" data-mode="c">Cash Game</button>
+  </div>
+
+  <!-- Turnier -->
+  <div class="screen" id="scrT">
+    <div class="empty" id="tEmpty">Kein Turnier läuft.<br>Starte es am Laptop mit dem Check-in.</div>
+    <div id="tBody">
+      <div class="status">
+        <div class="lvl" id="tLevel"></div>
+        <div class="time" id="tTime">--:--</div>
+        <div class="blinds" id="tBlinds"></div>
+        <div class="next" id="tNext"></div>
+        <div class="hint" id="tHint"></div>
+      </div>
+
+      <div class="row r5">
+        <button class="btn" data-cmd="t:clock.prev">&#9664;&#9664;</button>
+        <button class="btn" data-cmd="t:clock.minus">&minus;1</button>
+        <button class="btn red" id="tPlay" data-cmd="t:clock.toggle">&#10074;&#10074;</button>
+        <button class="btn" data-cmd="t:clock.plus">+1</button>
+        <button class="btn" data-cmd="t:clock.next">&#9654;&#9654;</button>
+      </div>
+
+      <div class="lbl" id="tPlayers"></div>
+      <div class="row r2">
+        <button class="btn big" id="bRebuy">Rebuy</button>
+        <button class="btn big red" id="bOut">Out</button>
+        <button class="btn big" id="bAddon">Add-On</button>
+        <button class="btn big" id="bLate">Nachzügler</button>
+      </div>
+
+      <div class="lbl">GELD</div>
+      <div class="money">
+        <div><small>Preispool</small><b id="mPrize"></b></div>
+        <div><small>Mystery-Pool</small><b id="mMystery"></b></div>
+        <div><small>Rebuys / Add-Ons</small><b id="mEntries"></b></div>
+        <div><small>Ø Stack</small><b id="mAvg"></b></div>
+        <div class="wide"><small>Umschläge</small><b id="mEnv"></b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cash Game -->
+  <div class="screen" id="scrC">
+    <div class="empty" id="cEmpty">Kein Cash Game läuft.<br>Starte es am Laptop.</div>
+    <div id="cBody">
+      <div class="money">
+        <div><small>Eingezahlt</small><b id="cIn"></b></div>
+        <div><small>In der Kasse</small><b id="cKasse"></b></div>
+      </div>
+      <div class="row">
+        <button class="btn big red" id="bJoin">+ Spieler setzt sich</button>
+      </div>
+      <div class="lbl" id="cTableLbl">AM TISCH</div>
+      <div class="plist" id="cList"></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <button class="btn" id="bUndo">&#8630; Rückgängig</button>
+    <button class="btn" id="bSound"></button>
+  </div>
+
+  <div class="sheet-bg" id="sheetBg"></div>
+  <div class="sheet" id="sheet">
+    <div class="h"><div><b id="shTitle"></b><span id="shSub"></span></div><button class="x" data-close aria-label="Schließen">&#10005;</button></div>
+    <div class="body" id="shBody"></div>
+    <div class="end" id="shEnd"></div>
+  </div>
+  <canvas id="confetti"></canvas>
+  <div class="toast" id="toast"><span id="toastText"></span><button id="toastUndo">Rückgängig</button></div>
+  <div class="lock" id="lock"><div><b>Nicht verbunden</b><p id="lockText">Bitte am Laptop im Steuermenü "Handy verbinden" wählen und den QR-Code scannen.</p></div></div>
+</div>
+<script src="core.js"></script>
+<script src="remote.js"></script>
+</body>
+</html>

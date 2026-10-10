@@ -3,12 +3,12 @@
   "productName": "Poker & Friends",
   "version": "1.7.0",
   "description": "Poker-Clock und Cash-Game-Kasse für den Pokerabend",
-  "author": "Frieo",
+  "author": "fre33o",
   "license": "MIT",
-  "homepage": "https://frieo.github.io/poker-and-friends/",
+  "homepage": "https://fre33o.github.io/poker-and-friends/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Frieo/poker-and-friends.git"
+    "url": "https://github.com/fre33o/poker-and-friends.git"
   },
   "main": "src/main/main.js",
   "private": true,
