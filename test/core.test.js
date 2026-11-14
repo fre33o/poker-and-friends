@@ -274,4 +274,33 @@ test("Cash Game: 20-€-Einkauf ab Spieler x 20 € Eingezahltem", () => {
   assert.ok(!C.replay(h).bigUnlocked);
 });
 
+test("Umschläge folgen dem Pool, wenn die Uhr nach der Pause zurückgestellt wird (Fehler 2026-11-14)", () => {
+  const g = tournament();
+  ["Max", "Anna", "Tom"].forEach((n, i) => act(g, "player.rebuy", t0 + i * 1000, { name: n }));
+  let ts = t0 + 10000;
+  const b = C.bountyStartIdx(C.replay(g));
+  for (let i = 0; i < b; i++) act(g, "clock.next", ts += 1000);
+  assert.ok(C.replay(g).envAmounts, "Umschläge nach der Pause festgelegt");
+  for (let i = 0; i < b; i++) act(g, "clock.prev", ts += 1000);
+  ["Lisa", "Ben", "Julia", "Paul"].forEach(n => act(g, "player.rebuy", ts += 1000, { name: n }));
+  for (let i = 0; i < b; i++) act(g, "clock.next", ts += 1000);
+  const s = C.replay(g);
+  assert.strictEqual(C.mysteryPool(s), 75);
+  assert.strictEqual(s.envAmounts.length, 7);
+  assert.strictEqual(s.envAmounts.reduce((a, x) => a + x, 0), 75);
+});
+
+test("Pool ändert sich nach dem ersten gezogenen Umschlag: Rest geht auf die geschlossenen", () => {
+  const g = tournament();
+  let ts = t0 + 1000;
+  const b = C.bountyStartIdx(C.replay(g));
+  for (let i = 0; i < b; i++) act(g, "clock.next", ts += 1000);
+  act(g, "player.out", ts += 1000, { name: "Sarah", by: "Max", envIndex: 0 });
+  for (let i = 0; i < b; i++) act(g, "clock.prev", ts += 1000);
+  act(g, "player.rebuy", ts += 1000, { name: "Anna" });
+  const s = C.replay(g);
+  assert.strictEqual(s.envAmounts.reduce((a, x) => a + x, 0), C.mysteryPool(s));
+  assert.strictEqual(s.envAmounts[0], s.envOpened[0].amt, "offener Umschlag bleibt unverändert");
+});
+
 console.log("\n" + passed + " Tests bestanden");
