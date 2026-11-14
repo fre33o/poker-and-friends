@@ -164,10 +164,27 @@
       s.envAmounts = envelopesFor(s, s.envTotal);
     }
   }
+  // Umschläge folgen dem Mystery-Pool: Ändert sich der Pool, nachdem die Umschläge festgelegt wurden
+  // (z. B. Uhr zurückgestellt und danach Rebuys), wird der Rest auf die noch geschlossenen Umschläge neu verteilt.
+  function syncEnvelopes(s) {
+    if (!s.envAmounts || !s.envAuto) return;
+    const opened = new Set(s.envOpened.map(o => o.i));
+    const shut = s.envAmounts.map((_, k) => k).filter(k => !opened.has(k));
+    if (!shut.length) return;
+    const openSum = s.envOpened.reduce((a, o) => a + o.amt, 0);
+    const want = Math.max(0, mysteryPool(s) - openSum);
+    if (shut.reduce((a, k) => a + s.envAmounts[k], 0) === want) return;
+    const amts = splitEnvelopes(want, shut.length, s.id + "|" + s.envOpened.length);
+    const next = s.envAmounts.slice();
+    shut.forEach((k, j) => { next[k] = amts[j]; });
+    s.envAmounts = next;
+  }
   function goTo(s, idx, ts) {
     s.clock.idx = Math.max(0, Math.min(s.structure.length - 1, idx));
     s.clock.remaining = cur(s).min * MIN;
     s.clock.anchorTs = ts;
+    // Zurück vor die Bounty-Phase, ohne dass schon ein Umschlag gezogen wurde: Umschläge neu festlegen lassen
+    if (!bountyActive(s) && s.envDrawn === 0) { s.envTotal = null; s.envAmounts = null; s.envOpened = []; }
     fixEnvelopes(s);
   }
 
@@ -431,8 +448,12 @@
     const table = s.type === "tournament" ? T_ACTIONS : C_ACTIONS;
     const fn = table[e.type];
     if (!fn) throw fail("Unbekannte Aktion: " + e.type);
-    if (s.type === "tournament") settle(s, e.ts);
-    return fn(s, e);
+    if (s.type !== "tournament") return fn(s, e);
+    settle(s, e.ts);
+    syncEnvelopes(s);
+    const msg = fn(s, e);
+    syncEnvelopes(s);
+    return msg;
   }
 
   function initState(init) {
