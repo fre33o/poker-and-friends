@@ -18,7 +18,7 @@ views.tournament = {
     cash: () => views.start.actions.cash(),
     history: () => openHistory(),
     end: doEnd,
-    info: () => { const on = $("pools").classList.toggle("show"); $("infoBtn").classList.toggle("active", on); },
+    info: () => showPools(!$("pools").classList.contains("show")),
     full: commonActions.full,
     mute: commonActions.mute,
     handy: () => openHandy(),
@@ -27,6 +27,12 @@ views.tournament = {
   render: renderTournament,
 };
 bindMenu("t", "tournament");
+function showPools(on) {
+  $("pools").classList.toggle("show", on);
+  $("infoBtn").classList.toggle("active", on);
+}
+// Während der Pause bleibt das Geld-Fenster offen (nur der €-Knopf schließt es)
+const onBreak = () => !!T && !!K.cur(K.tView(T, Date.now())).brk;
 $("infoBtn").onclick = e => { e.currentTarget.blur(); views.tournament.actions.info(); };
 $("breakAddonRow").onclick = () => doAddon();
 // Klick auf die große Uhr startet sie (Play-Symbol) oder hält sie an
@@ -35,6 +41,7 @@ $("cdWrap").onclick = () => { if (T && !T.winner) views.tournament.actions.toggl
 document.addEventListener("click", e => {
   if (modalOpen || !$("pools").classList.contains("show")) return;
   if (e.composedPath().some(el => el.id === "pools" || el.id === "infoBtn")) return;
+  if (onBreak()) return;
   views.tournament.actions.info();
 });
 
@@ -110,13 +117,17 @@ function renderTournament(now) {
 }
 
 // ---------- Levelwechsel, Uhr-Start, Sieger ----------
-let seen = { id: null, idx: 0 };
+let seen = { id: null, idx: 0, brk: false };
 function tournamentTick(now) {
   if (!T) { seen.id = null; return; }
   const v = K.tView(T, now);
   if (seen.id === T.id && v.clock.idx > seen.idx) announce(v);
+  // Pause beginnt: Geld-Fenster einblenden, Pause endet: wieder ausblenden
+  const brk = !!K.cur(v).brk;
+  if (seen.id !== T.id ? brk : brk !== seen.brk) showPools(brk);
   seen.id = T.id;
   seen.idx = v.clock.idx;
+  seen.brk = brk;
   if (settingsOpen) refreshSettingsLive(v);
 }
 function announce(v) {
